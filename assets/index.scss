@@ -1,0 +1,15 @@
+@import "variables";
+
+.bx-core {
+    & body{
+        padding-top: 64px !important;
+    }
+    & .header{
+        .header__top-block{
+            display: none;
+        }
+    }
+}
+
+@media screen and (max-device-width: 600px) {
+}
