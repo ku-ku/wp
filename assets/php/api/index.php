@@ -253,6 +253,9 @@ function acts_save(){
     return $res;
 }   //act_save
 
+/**
+ * read user info
+ */
 function user(){
     global $USER;
     if ( $USER->IsAuthorized() ){
