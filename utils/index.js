@@ -10,6 +10,12 @@ const MODES = {
     "error":    9
 };
 
+const DIA_MODES = {
+    "none": 0,
+    "action": 1,
+    "reday": 2
+};
+
 /**
  * @param {String} val
  * @return {Boolean}
@@ -37,6 +43,7 @@ const lookup = async addr => {
 export {
     NULL_ID,
     MODES,
+    DIA_MODES,
     empty,
     lookup
 };

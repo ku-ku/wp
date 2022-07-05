@@ -1,6 +1,8 @@
 <?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+use Bitrix\Highloadblock\HighloadBlockTable as HLBT;
 \Bitrix\Main\Loader::includeModule('iblock');
+\Bitrix\Main\Loader::includeModule('highloadblock');
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
@@ -24,6 +26,9 @@ switch ($q){
         break;
     case "user":
         $data = user();
+        break;
+    case "divisions":
+        $data = divisions();
         break;
     default:
         $valid = false;
@@ -229,8 +234,8 @@ function acts_save(){
         if ($id > 0){
             $el->Update($id, $elVals);
             $elId = $id;
-        } else {
             $elId = $el->Add($elVals);
+        } else {
         }
         if ( $elId ){
             CIBlockElement::SetPropertyValues($elId, $rootId, $request["dvs"], "PLNDVS");
@@ -266,4 +271,14 @@ function user(){
     return array( "id" => -1 );
 }   //user
 
+function divisions(){
+    $hlblock = HLBT::getById(2)->fetch();
+    $entity = HLBT::compileEntity($hlblock);
+    $entity_data_class = $entity->getDataClass();
+	$rsData = $entity_data_class::getList(array(
+   		'select' => array('*'),
+		'order' => array('UF_SORT' => 'ASC'),
+	));
+    return $rsData;
+}
 ?>

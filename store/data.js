@@ -1,5 +1,6 @@
 export const state = ()=>({
-    user: null
+    user: null,
+    divisions: null
 });
 
 export const mutations = {
@@ -28,5 +29,23 @@ export const actions = {
                 })
             }
         });
-    }
-};  //actions
+    },   //user
+    async list({state, commit}, payload){
+        return new Promise((resolve, reject)=>{
+            if (!!state[payload]){
+                resolve(state[payload]);
+            } else {
+                $nuxt.api(payload).then(res => {
+                    const o = {};
+                    o[payload] = res;
+                    commit("set", o);
+                    resolve(res);
+                }).catch(e => {
+                    console.log('ERR (data)', e);
+                    reject(e);
+                })
+            }
+        });
+    },   //list
+
+};      //actions
