@@ -1,8 +1,8 @@
 <?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
-use Bitrix\Highloadblock\HighloadBlockTable as HLBT;
 \Bitrix\Main\Loader::includeModule('iblock');
 \Bitrix\Main\Loader::includeModule('highloadblock');
+use Bitrix\Highloadblock\HighloadBlockTable as HLBT;
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
@@ -30,6 +30,9 @@ switch ($q){
     case "divisions":
         $data = divisions();
         break;
+    case "users":
+        $data = users();
+        break;    
     default:
         $valid = false;
 }   //switch ($q...
@@ -285,4 +288,20 @@ function divisions(){
     }
     return $res;
 }
+
+
+function users(){
+    $order = array('sort' => 'asc');
+    $tmp = 'sort';
+    $res = array();
+    $params = array("ID", "ACTIVE", "LOGIN", "NAME", "SECOND_NAME", "LAST_NAME", "EMAIL", "PERSONAL_PHONE", "PERSONAL_NOTES", "IS_ONLINE");
+    
+    $filter = array();
+    $rsUsers = CUser::GetList($order, $tmp, $filter, $params);
+    while( $el = $rsUsers->Fetch() ) {
+        $res[] = $el;
+    };
+    return $res;
+}
+
 ?>
