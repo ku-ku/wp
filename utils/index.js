@@ -13,7 +13,8 @@ const MODES = {
 const DIA_MODES = {
     "none": 0,
     "action": 1,
-    "reday": 2
+    "reday": 2,
+    "dvs": 3
 };
 
 /**

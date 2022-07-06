@@ -3,13 +3,12 @@
               v-model="show"
               max-width="800">
         <v-toolbar dark
-                   color="primary"
-                   dense>
-            <v-icon>{{has('add') ? 'mdi-calendar-plus':'mdi-calendar-text'}}</v-icon>&nbsp;
+                   color="primary">
+            <v-icon small>{{has('add') ? 'mdi-plus':'mdi-file-document-edit'}}</v-icon>&nbsp;
             {{has('add') ? 'Новая запись' : 'Редактирование'}}
             <v-spacer />
-            <v-btn small icon v-on:click="show = false">
-                <v-icon>mdi-close</v-icon>
+            <v-btn small text v-on:click="show = false">
+                <v-icon small>mdi-close</v-icon>
             </v-btn>
         </v-toolbar>
         <v-card tile>
@@ -19,7 +18,8 @@
                 </component>
             </v-card-text>
             <v-card-actions>
-                    <v-btn small tile color="primary">
+                    <v-btn small tile color="primary"
+                           :loading="loading">
                         <v-icon small>mdi-file-send-outline</v-icon>сохранить
                     </v-btn>
                     <v-btn small tile outlined color="secondary"
@@ -34,6 +34,7 @@
 import { DIA_MODES } from "~/utils/";
 import WpFrmAction from "~/components/WpFrmAction.vue";
 import WpFrmRed from "~/components/WpFrmRed.vue";
+import WpFrmDivision from "~/components/WpFrmDivision.vue";
 
 export default {
     name: 'WpDialog',
@@ -55,22 +56,34 @@ export default {
                     return WpFrmAction;
                 case DIA_MODES.reday:
                     return WpFrmRed;
+                case DIA_MODES.dvs:
+                    return WpFrmDivision
             }
             return null;
+        },
+        loading(){
+            return this.$refs["form"]?.loading;
         }
     },
     methods: {
         has(q){
             switch(q){
                 case "add":
-                    return (this.id < 1);
+                    return this.$refs["form"]?.has("add");
             }
             return false;
         },  //has
-        open(mode, id){
+        /**
+         * 
+         * @param {DIA_MODES} mode - use form by
+         * @param {Object?} item for editing
+         */
+        open(mode, item){
             this.mode = mode,
-            this.id = id;
             this.show = (new Date()).getTime();
+            this.$nextTick(()=>{
+                this.$refs["form"].use(item);
+            });
         }
     }
 }

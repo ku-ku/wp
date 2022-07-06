@@ -279,6 +279,10 @@ function divisions(){
    		'select' => array('*'),
 		'order' => array('UF_SORT' => 'ASC'),
 	));
-    return $rsData;
+    $res = array();
+    while($el = $rsData->fetch()){
+        $res[] = $el;
+    }
+    return $res;
 }
 ?>
