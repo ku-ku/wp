@@ -25,8 +25,11 @@
 </v-form>
 </template>
 <script>
+import { mxForm } from '~/utils/mxForm.js';
+
 export default {
     name: 'WpFrmRed',
+    mixins: [ mxForm ],
     data(){
         return {
             id: -1,

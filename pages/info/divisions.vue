@@ -6,7 +6,7 @@
                   single-select>
         <template v-slot:top>
             <v-toolbar flat>
-                <v-toolbar-title>Структура</v-toolbar-title>
+                <v-badge :content="get('count')">Структура</v-badge>
                 <v-spacer></v-spacer>
                 <v-btn small outlined color="secondary"
                        v-on:click="edit">
@@ -50,17 +50,27 @@ export default {
                 { text: 'Наименование', value: 'UF_NAME' },
                 { text: 'Активно', value: 'UF_ACTIVE' },
                 { text: 'Порядок', value: 'UF_SORT' },
-                { text: '...', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
+                { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
             ]
         };
     },
     methods: {
+        get(q){
+            switch(q){
+                case "count":
+                    return this.all?.length;
+            }
+            return false;
+        },
         edit(dvs){
             console.log('edit', dvs);
             this.$refs["dlg"].open(DIA_MODES.dvs, dvs);
         },
         del(dvs){
             console.log('del', dvs);
+            if ( confirm('Подтвердите удаление для "' + dvs.UF_NAME + '"') ){
+
+            }
         }
     }
 }

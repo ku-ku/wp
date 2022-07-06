@@ -11,6 +11,10 @@
                            color="primary"
                            absolute temporary>
         <v-list dense>
+          <v-list-item to="/">
+            <v-list-item-icon><v-icon>mdi-calendar-month</v-icon></v-list-item-icon>
+            <v-list-item-title>План мероприятий</v-list-item-title>
+          </v-list-item>
           <v-list-item :to="{path: '/info/divisions', replace: true}">
             <v-list-item-icon><v-icon>mdi-office-building</v-icon></v-list-item-icon>
             <v-list-item-title>Структура</v-list-item-title>
@@ -19,7 +23,7 @@
             <v-list-item-icon><v-icon>mdi-card-account-details-outline</v-icon></v-list-item-icon>
             <v-list-item-title>Должности</v-list-item-title>
           </v-list-item>
-          <v-list-item>
+          <v-list-item :to="{path: '/info/users', replace: true}">
             <v-list-item-icon><v-icon>mdi-account-supervisor</v-icon></v-list-item-icon>
             <v-list-item-title>Пользователи</v-list-item-title>
           </v-list-item>
