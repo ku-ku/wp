@@ -35,6 +35,7 @@ import { DIA_MODES } from "~/utils/";
 import WpFrmAction from "~/components/WpFrmAction.vue";
 import WpFrmRed from "~/components/WpFrmRed.vue";
 import WpFrmDivision from "~/components/WpFrmDivision.vue";
+import WpFrmUser from "~/components/WpFrmUser.vue";
 
 export default {
     name: 'WpDialog',
@@ -57,7 +58,9 @@ export default {
                 case DIA_MODES.reday:
                     return WpFrmRed;
                 case DIA_MODES.dvs:
-                    return WpFrmDivision
+                    return WpFrmDivision;
+                case DIA_MODES.user:
+                    return WpFrmUser;
             }
             return null;
         },
