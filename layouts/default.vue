@@ -19,7 +19,7 @@
             <v-list-item-icon><v-icon>mdi-office-building</v-icon></v-list-item-icon>
             <v-list-item-title>Структура</v-list-item-title>
           </v-list-item>
-          <v-list-item>
+          <v-list-item :to="{path: '/info/staffing', replace: true}">
             <v-list-item-icon><v-icon>mdi-card-account-details-outline</v-icon></v-list-item-icon>
             <v-list-item-title>Должности</v-list-item-title>
           </v-list-item>
@@ -27,11 +27,15 @@
             <v-list-item-icon><v-icon>mdi-account-supervisor</v-icon></v-list-item-icon>
             <v-list-item-title>Пользователи</v-list-item-title>
           </v-list-item>
+          <v-list-item :to="{path: '/info/users', replace: true}">
+            <v-list-item-icon><v-icon>mdi-account-tie</v-icon></v-list-item-icon>
+            <v-list-item-title>Сотрудники</v-list-item-title>
+          </v-list-item>
         </v-list>
       </v-navigation-drawer>  
         <Nuxt />
     </v-main>
-    <wp-dialog ref="dlg" />
+    <wp-dialog ref="dlg" :mode="DIA_MODES.action" />
   </v-app>
 </template>
 

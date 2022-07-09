@@ -32,15 +32,16 @@ switch ($q){
         break;
     case "users":
         $data = users();
-        break;    
+        break;
+    case "staffing":
+        $data = staffing( $request["params"] );
+        break;
     default:
         $valid = false;
 }   //switch ($q...
 
 header('Content-Type: text/plain; charset=UTF-8');
 if ( ($valid)&&($data) ){
-    //    header('Content-Type: application/json');
-    //print \Bitrix\Main\Web\Json::encode($data);
     $content = json_encode($data);
     $jsonerr = json_last_error();
     if ($jsonerr !== JSON_ERROR_NONE){
@@ -261,6 +262,20 @@ function acts_save(){
     return $res;
 }   //act_save
 
+function hlbtByName($name){
+    $args = array(
+        'select' => array('ID'),
+        'filter' => array('TABLE_NAME' => $name)
+    );
+    $res = -1;
+    $hlblock = HLBT::getList($args);
+    if ( $row = $hlblock->fetch() ){
+        $res = $row['ID'];
+    }
+    return $res;
+}   //listTables
+
+
 function user(){
     global $USER;
     if ( $USER->IsAuthorized() ){
@@ -275,16 +290,19 @@ function user(){
 }   //user
 
 function divisions(){
-    $hlblock = HLBT::getById(2)->fetch();
-    $entity = HLBT::compileEntity($hlblock);
-    $entity_data_class = $entity->getDataClass();
-	$rsData = $entity_data_class::getList(array(
-   		'select' => array('*'),
-		'order' => array('UF_SORT' => 'ASC'),
-	));
+    $hlbtId = hlbtByName('department_codes');
     $res = array();
-    while($el = $rsData->fetch()){
-        $res[] = $el;
+    if ($hlbtId > 0){
+        $hlblock = HLBT::getById($hlbtId)->fetch();
+        $entity = HLBT::compileEntity($hlblock);
+        $entity_data_class = $entity->getDataClass();
+            $rsData = $entity_data_class::getList(array(
+                    'select' => array('*'),
+                    'order' => array('UF_SORT' => 'ASC'),
+            ));
+        while($el = $rsData->fetch()){
+            $res[] = $el;
+        }
     }
     return $res;
 }
@@ -303,5 +321,43 @@ function users(){
     };
     return $res;
 }
+
+function staffing($params){
+    
+    $hlbtId = hlbtByName('staffing');
+    if ($hlbtId < 1){
+        return false;
+    }
+    
+    $res = array();
+    $hlblock = HLBT::getById($hlbtId)->fetch();
+    $entity = HLBT::compileEntity($hlblock);
+    $entity_data_class = $entity->getDataClass();
+    
+    if ( isset($params) ){
+        switch($params["action"]){
+            case "save":
+                $item = $params["item"];
+                $fields = array( 
+                    'UF_NAME' => $item["UF_NAME"],
+                    'UF_DISABLE' => !!$item["UF_DISABLE"] ? 1 : 0
+                );
+                
+                $obResult = ( intval($item['ID']) > 0 ) ? $entity_data_class::update($item['ID'], $fields) : $entity_data_class::add($fields);
+                $res = array("success" => $obResult->isSuccess(), "ID"=> $obResult->getID() );
+                break;
+        }
+    } else {
+        $rsData = $entity_data_class::getList(array(
+                        'select' => array('*'),
+                        'order' => array('UF_NAME' => 'ASC'),
+        ));
+        while($el = $rsData->fetch()){
+            $res[] = $el;
+        }
+    }
+    return $res;
+    
+}   //staffing
 
 ?>

@@ -15,7 +15,8 @@ const DIA_MODES = {
     "action": 1,
     "reday": 2,
     "dvs": 3,
-    "user": 4
+    "user": 4,
+    "staff": 5
 };
 
 /**

@@ -22,6 +22,18 @@
     }
 }
 
+table {
+    & > thead > tr > th {
+        vertical-align: top;
+    }
+    .col-fixed {
+        max-width: 18rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
 
 @media screen and (max-device-width: 600px) {
 }

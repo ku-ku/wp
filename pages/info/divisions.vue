@@ -26,7 +26,7 @@
             </v-btn>
         </template>
     </v-data-table>
-    <wp-dialog ref="dlg" />
+    <wp-dialog ref="dlg" :mode="DIA_MODES.dvs" />
 </v-container>
 </template>
 <script>
@@ -45,6 +45,7 @@ export default {
     },
     data(){
         return {
+            DIA_MODES,
             headers: [
                 { text: 'Код', value: 'UF_CODE' },
                 { text: 'Наименование', value: 'UF_NAME' },
@@ -64,7 +65,7 @@ export default {
         },
         edit(dvs){
             console.log('edit', dvs);
-            this.$refs["dlg"].open(DIA_MODES.dvs, dvs);
+            this.$refs["dlg"].open(dvs);
         },
         del(dvs){
             console.log('del', dvs);

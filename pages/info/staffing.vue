@@ -1,13 +1,13 @@
 <template>
-<v-container fluid>
-    <v-data-table :headers="headers"
-                  :items="users"
-                  :items-per-page="30"
-                  single-select
-                  dense>
+    <v-container>
+        <v-data-table :headers="headers"
+                      :items="staffs"
+                      :items-per-page="30"
+                      single-select
+                      dense>
         <template v-slot:top>
             <v-toolbar flat>
-                <v-badge :content="get('count')">Пользователи</v-badge>
+                <v-badge :content="get('count')">Должности</v-badge>
                 <v-spacer></v-spacer>
                 <v-text-field v-on:input="filtering" 
                               placeholder="поиск"
@@ -21,7 +21,7 @@
                 </v-text-field>
                 <v-btn small outlined color="secondary"
                        v-on:click="edit">
-                       Добавить пользователя&nbsp;<v-icon small>mdi-plus</v-icon>
+                       Добавить должность&nbsp;<v-icon small>mdi-plus</v-icon>
                 </v-btn>
             </v-toolbar>
         </template>
@@ -36,9 +36,15 @@
                 <v-icon small>mdi-delete</v-icon>
             </v-btn>
         </template>
+        <template v-slot:item.UF_DISABLE="{ item }">
+            <v-icon v-if="Number(item.UF_DISABLE)>0">mdi-checkbox-outline</v-icon>
+        </template>
     </v-data-table>
-    <wp-dialog ref="dlg" :mode="DIA_MODES.user" />
+    <wp-dialog ref="dlg" 
+               :mode="DIA_MODES.staff" 
+               v-on:change="change" />
 </v-container>
+    
 </template>
 <script>
 import { DIA_MODES, empty } from "~/utils/";
@@ -46,36 +52,34 @@ import WpDialog from "~/components/WpDialog.vue";
 
 var hTimer = false;
 
-export default{
-    name: 'WpUsers',
-    comments:{
+export default {
+    name: 'WpStaffing',
+    comments: {
         WpDialog
     },
     async asyncData({store}) {
-        return {
-            all: await store.dispatch("data/list", "users")
+        var all;
+        try {
+            all = await store.dispatch("data/list", "staffing");
+        } catch(e){
+            all = [];
+            console.log('ERR (Staffing)', e);
         }
+        return { all };
     },
     data(){
         return {
             DIA_MODES,
             s: null,
             headers: [
-                { text: 'Login', value: 'LOGIN',  cellClass: "col-fixed" },
-                { text: 'Имя', value: 'NAME' },
-                { text: 'Фамилия', value: 'LAST_NAME' },
-                { text: 'Отчество', value: 'SECOND_NAME' },
-                { text: 'e-mail', value: 'EMAIL' },
-                { text: 'Тел.', value: 'PERSONAL_PHONE' },
-                { text: 'А', value: 'ACTIVE' },
-                { text: 'Посл.вход', value: 'LAST_LOGIN',  cellClass: "col-fixed"},
-                { text: 'Примечание', value: 'PERSONAL_NOTES',  cellClass: "col-fixed" },
+                { text: 'Наименование', value: 'UF_NAME' },
+                { text: 'Откл', value: 'UF_DISABLE', cellClass: "col-fixed text-center" },
                 { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
             ]
         };
     },
     computed: {
-        users(){
+        staffs(){
             if (!this.all){
                 return [];
             }
@@ -84,25 +88,23 @@ export default{
             } else {
                 const re = new RegExp('(' + this.s + ')+', 'gi');
                 return this.all.filter( e => {
-                    return re.test(e.LOGIN) 
-                        || re.test(e.LAST_NAME)
-                        || re.test(e.EMAIL);
+                    return re.test(e.UF_NAME);
                 });
             }
-        }
+        }   //staffs
     },
     methods: {
         get(q){
             switch(q){
                 case "count":
-                    return this.users?.length;
+                    return this.staffs?.length;
             }
             return false;
         },
-        edit(user){
-            this.$refs["dlg"].open(user);
+        edit(stf){
+            this.$refs["dlg"].open(stf);
         },
-        del(user){
+        del(stf){
 
         },
         filtering(s){
@@ -113,7 +115,17 @@ export default{
                 hTimer = false;
                 this.s = s;
             }, 500);
+        },
+        change(item){
+            console.log('change', item);
+            const n = this.all.findIndex( e => e.ID === item.ID);
+            if ( n > -1 ){
+                this.all[n] = item;
+            } else {
+                this.all.push(item);
+            }
         }
     }
-}
+    
+};
 </script>

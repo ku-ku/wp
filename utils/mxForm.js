@@ -1,4 +1,5 @@
 export const mxForm = {
+    fetchOnServer: false,
     computed: {
         loading(){
             return this.$fetchState.pending;
@@ -13,6 +14,9 @@ export const mxForm = {
         },
         use(item){
             this.item = {...item};
+        },
+        validate(){
+            return false;
         },
         async save(){
             console.log('saving...', this.item);
