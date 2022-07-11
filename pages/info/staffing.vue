@@ -3,8 +3,13 @@
         <v-data-table :headers="headers"
                       :items="staffs"
                       :items-per-page="30"
+                      dense
                       single-select
-                      dense>
+                      item-key="ID"
+                      :footer-props="{itemsPerPageText:'строк/стр.'}"
+                      :loading="$fetchState.pending"
+                      :value="selected"
+                      v-on:click:row="selected = [$event]">
         <template v-slot:top>
             <v-toolbar flat>
                 <v-badge :content="get('count')">Должности</v-badge>
@@ -60,6 +65,7 @@ export default {
         return {
             DIA_MODES,
             all: [],
+            selected: [],
             s: null,
             headers: [
                 { text: 'Наименование', value: 'UF_NAME' },
@@ -91,7 +97,11 @@ export default {
             }
             return false;
         },
+        sel(item){
+            
+        },
         edit(stf){
+            this.selected = [stf];
             this.$refs["dlg"].open(stf);
         },
         async del(staffing){
