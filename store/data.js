@@ -7,27 +7,49 @@ export const state = ()=>({
 });
 
 export const mutations = {
+    /**
+     * Set object collection to store
+     * @param {Array} payload array items to store
+     */
     set(state, payload){
-        if (!!payload){
-            if (payload.hasOwnProperty("divisions")){
-                state.divisions = payload.divisions;
-            }
-            if (payload.hasOwnProperty("user")){
-                state.user = payload.user;
-            }
-            if (payload.hasOwnProperty("staffing")){
-                state.staffing = payload.staffing;
-            }
-        }
+        Object.keys(payload).map( k=>{
+            state[k] = payload[k];
+        });
     },
-    rm(state, payload){
-        if ( payload.hasOwnProperty("staffing") ){
-            const n = state.staffing?.findIndex( s=> s.ID === payload.staffing.ID );
-            if ( n > -1 ){
-                state.staffing.splice(n, 1);
+    /**
+     * Update | set one object to store
+     * @param {Object} payload exampl: {user|divisions:{ID+, ...}}
+     */
+    upd(state, payload){
+        Object.keys(payload).map( k=>{
+            const o = payload[k];
+            if ( !Array.isArray(state[k]) ){
+                state[k] = [];
             }
-        }
-    }
+            const items = state[k];
+            const n = items.findIndex( i=>i.ID === o.ID );
+            if ( n < 0 ){
+                items.push(o);
+            } else {
+                items.splice(n, 1, o);
+            }
+        });
+    },  //upd
+    /**
+     * Remove object from collection
+     * @param {Object} payload 
+     */
+    rm(state, payload){
+        Object.keys(payload).map( k=>{
+            if ( !Array.isArray(state[k]) ){
+                return;
+            }
+            const n = state[k].findIndex( i => i.ID === payload[k].ID );
+            if ( n > -1 ){
+                state[k].splice(n, 1);
+            }
+        });
+    }   //rm
 };  //mutations
     
 
@@ -65,26 +87,42 @@ export const actions = {
         });
     },   //list
     /**
+     * Change data-action
+     * @param {Object} payload item for updating
+     * @returns {Promise}
+     */
+    async upd({commit}, payload){
+        return new Promise((resolve, reject)=>{
+            Object.keys(payload).map( k => {
+                const item = payload[k];
+                $nuxt.api(k, {
+                            action: "save",
+                            item
+                }).then( data => {
+                    if (!!data.success){
+                        payload[k].ID = data.ID;
+                        commit("upd", payload);
+                        resolve();
+                    } else {
+                        throw {message: data.error};
+                    }
+                }).catch(e => {
+                    reject(e);
+                });
+            });
+        });
+    },  //upd
+    /**
      * Deleting item for collection
      * @param {Object} payload - item 
      * @returns {Promise}
      */
     async rm({commit}, payload){
-        console.log("rm", payload);
         return new Promise((resolve, reject)=>{
-            var that, id;
-            
-            if ( payload.hasOwnProperty("staffing") ){
-                that = "staffing";
-                id = payload.staffing.ID;
-            }
-            
-            if ( empty(that) ){
-                reject({message: "Unknown operation"});
-            } else {
-                $nuxt.api(that, {
+            Object.keys(payload).map( k => {
+                $nuxt.api(k, {
                             action: "del",
-                            ID: id
+                            ID: payload[k].ID
                 }).then( data => {
                     console.log("rm", data);
                     if (!!data.success){
@@ -96,7 +134,7 @@ export const actions = {
                 }).catch(e => {
                     reject(e);
                 });
-            }
+            });
         });
     }   //rm
 

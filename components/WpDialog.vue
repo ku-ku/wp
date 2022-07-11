@@ -75,6 +75,7 @@ export default {
         component(){
             return DIA_FORMS[this.mode];
         },
+        //TODO:
         loading(){
             return this.$refs["form"]?.loading;
         }
@@ -101,7 +102,7 @@ export default {
                 }
             });
         },
-        async save(){
+        save(){
             const f = this.$refs["form"];
             if ( f.validate() ){
                 f.save();

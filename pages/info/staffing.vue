@@ -9,16 +9,7 @@
             <v-toolbar flat>
                 <v-badge :content="get('count')">Должности</v-badge>
                 <v-spacer></v-spacer>
-                <v-text-field v-on:input="filtering" 
-                              placeholder="поиск"
-                              dense
-                              clearable
-                              style="max-width:15rem;margin-right:1rem;"
-                              hide-details>
-                    <template v-slot:append>
-                        <v-icon>mdi-magnify</v-icon>
-                    </template>
-                </v-text-field>
+                <wp-search-field v-on:filter="s = $event" />
                 <v-btn small outlined color="secondary"
                        v-on:click="edit">
                        Добавить должность&nbsp;<v-icon small>mdi-plus</v-icon>
@@ -49,23 +40,21 @@
 <script>
 import { DIA_MODES, empty } from "~/utils/";
 import WpDialog from "~/components/WpDialog.vue";
-
-var hTimer = false;
+import WpSearchField from "~/components/WpSearchField.vue";
 
 export default {
     name: 'WpStaffing',
     comments: {
-        WpDialog
+        WpDialog,
+        WpSearchField
     },
     async fetch(){
-        var all;
         try {
-            all = await this.$store.dispatch("data/list", "staffing");
+            this.all = await this.$store.dispatch("data/list", "staffing");
         } catch(e){
-            all = [];
+            this.all = [];
             console.log('ERR (Staffing)', e);
         }
-        this.all = all;
     },
     data(){
         return {
@@ -106,7 +95,6 @@ export default {
             this.$refs["dlg"].open(stf);
         },
         async del(staffing){
-            console.log('staffing (del)', staffing);
             if (!window.confirm(`ВНИМАНИЕ! Удалить должность "${staffing.UF_NAME}"?`)){
                 return;
             }
@@ -118,28 +106,13 @@ export default {
                 $nuxt.msg({type:'warning', text: `ОШИБКА удаления: ${e?.message || 'неизвестная'}`});
             }
         },
-        filtering(s){
-            if (!!hTimer){
-                clearTimeout(hTimer);
-            }
-            hTimer = setTimeout(()=>{
-                hTimer = false;
-                this.s = s;
-            }, 500);
-        },
         /**
          * Event handle after savig
          */
         change(item){
             console.log('change', item);
-            const n = this.all.findIndex( e => e.ID === item.ID);
-            if ( n > -1 ){
-                this.all[n] = item;
-            } else {
-                this.all.push(item);
-            }
+            this.$fetch();
         }
     }
-    
 };
 </script>

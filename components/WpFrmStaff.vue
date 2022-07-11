@@ -1,5 +1,5 @@
 <template>
-<v-form>
+<v-form v-on:submit.stop.prevent="save">
     <v-row>
         <v-col cols="12">
             <v-text-field label="Наименование" 
@@ -37,25 +37,6 @@ export default {
             }
         };
     },
-    async fetch(){
-        if (!!this.item.saving){
-            $nuxt.api("staffing", {
-                        action: "save",
-                        item: this.item
-            }).then( data => {
-                console.log('on save', data);
-                if (!!data.success){
-                    this.item.ID = data.ID;
-                    this.$emit("success", this.item);
-                } else {
-                    this.$emit("error", {message: data.error});
-                }
-            }).catch( e => {
-                this.$emit("error", e);
-            });
-            delete this.item.saving;
-        }
-    },
     methods: {
         validate(){
             if ( empty(this.item.UF_NAME) ){
@@ -65,9 +46,14 @@ export default {
             return true;
         },
         async save(){
-            this.item.saving = true;
-            return this.$fetch();
-        }
+            try {
+                await this.$store.dispatch("data/upd", {staffing: this.item});
+                this.$emit("success", this.item);
+            } catch(e){
+                this.$emit("error", e);
+            }
+            return false;
+        }   //save
     }
 }
 </script>
