@@ -1,4 +1,9 @@
 <?php
+/**
+ * API realization for Work-plan
+ * 
+ */
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 \Bitrix\Main\Loader::includeModule('iblock');
 \Bitrix\Main\Loader::includeModule('highloadblock');
@@ -322,6 +327,11 @@ function users(){
     return $res;
 }
 
+/**
+ * Staff`s oop`s
+ * @param type $params
+ * @return boolean
+ */
 function staffing($params){
     
     $hlbtId = hlbtByName('staffing');
@@ -345,6 +355,19 @@ function staffing($params){
                 
                 $obResult = ( intval($item['ID']) > 0 ) ? $entity_data_class::update($item['ID'], $fields) : $entity_data_class::add($fields);
                 $res = array("success" => $obResult->isSuccess(), "ID"=> $obResult->getID() );
+                break;
+            case "del":
+                $id = intval($params['ID']);
+                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
+                if (!!$res){
+                    if ( $res->isSuccess() ){
+                        $res = array("id" => $id, "success"=> true);
+                    } else {
+                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
+                    }
+                } else {
+                    $res = array("success" => false, "error"=>"Unknown item #");
+                }
                 break;
         }
     } else {

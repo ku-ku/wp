@@ -57,19 +57,20 @@ export default {
     comments: {
         WpDialog
     },
-    async asyncData({store}) {
+    async fetch(){
         var all;
         try {
-            all = await store.dispatch("data/list", "staffing");
+            all = await this.$store.dispatch("data/list", "staffing");
         } catch(e){
             all = [];
             console.log('ERR (Staffing)', e);
         }
-        return { all };
+        this.all = all;
     },
     data(){
         return {
             DIA_MODES,
+            all: [],
             s: null,
             headers: [
                 { text: 'Наименование', value: 'UF_NAME' },
@@ -104,8 +105,18 @@ export default {
         edit(stf){
             this.$refs["dlg"].open(stf);
         },
-        del(stf){
-
+        async del(staffing){
+            console.log('staffing (del)', staffing);
+            if (!window.confirm(`ВНИМАНИЕ! Удалить должность "${staffing.UF_NAME}"?`)){
+                return;
+            }
+            try {
+                await this.$store.dispatch("data/rm", {staffing});
+                this.$fetch();
+            }catch(e){
+                console.log('ERR (del)', e);
+                $nuxt.msg({type:'warning', text: `ОШИБКА удаления: ${e?.message || 'неизвестная'}`});
+            }
         },
         filtering(s){
             if (!!hTimer){
@@ -116,6 +127,9 @@ export default {
                 this.s = s;
             }, 500);
         },
+        /**
+         * Event handle after savig
+         */
         change(item){
             console.log('change', item);
             const n = this.all.findIndex( e => e.ID === item.ID);
