@@ -84,6 +84,31 @@ function fieldIds($table, $field){
 
 function install(){
     /**
+     * User group
+     */
+    $groupId = "WP_PLANNING";
+    $f = "ID";
+    $sort = "ASC";
+    $filter = array("STRING_ID"=>$groupId);
+    $res = CGroup::GetList($f, $sort, $filter);
+
+    if ( $res->SelectedRowsCount() < 1) {
+        $group = new CGroup();
+
+        $arFields = Array(
+            "ACTIVE"       => "Y",
+            "C_SORT"       => 555,
+            "NAME"         => "Планирование мероприятий",
+            "DESCRIPTION"  => "Пользователи планирования мероприятий",
+            "STRING_ID"    => $groupId
+        );
+        $groupId = $group->Add($arFields);
+        echo 'Group ' . $groupId . ' added: ' . $group->LAST_ERROR . PHP_EOL;
+    } else {
+        echo 'Group ' . $groupId . ' exists' . PHP_EOL;
+    }
+
+    /**
      * HLBT: Staffing
      */
     if ( !exits('staffing') ){
