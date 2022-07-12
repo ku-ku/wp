@@ -39,6 +39,7 @@ import WpFrmRed from "~/components/WpFrmRed.vue";
 import WpFrmDivision from "~/components/WpFrmDivision.vue";
 import WpFrmUser from "~/components/WpFrmUser.vue";
 import WpFrmStaff from "~/components/WpFrmStaff.vue";
+import WpFrmEmployee from "~/components/WpFrmEmployee.vue";
 
 const DIA_FORMS = {};
 DIA_FORMS[DIA_MODES.action] = WpFrmAction;
@@ -46,6 +47,7 @@ DIA_FORMS[DIA_MODES.reday]  = WpFrmRed;
 DIA_FORMS[DIA_MODES.dvs]    = WpFrmDivision;
 DIA_FORMS[DIA_MODES.user]   = WpFrmUser;
 DIA_FORMS[DIA_MODES.staff]  = WpFrmStaff;
+DIA_FORMS[DIA_MODES.emp]    = WpFrmEmployee;
 
 
 export default {
@@ -55,7 +57,8 @@ export default {
         WpFrmRed,
         WpFrmDivision,
         WpFrmUser,
-        WpFrmStaff
+        WpFrmStaff,
+        WpFrmEmployee
     },
     props: {
         mode: {

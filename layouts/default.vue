@@ -27,7 +27,7 @@
             <v-list-item-icon><v-icon>mdi-account-supervisor</v-icon></v-list-item-icon>
             <v-list-item-title>Пользователи</v-list-item-title>
           </v-list-item>
-          <v-list-item :to="{path: '/info/users', replace: true}">
+          <v-list-item :to="{path: '/info/employees', replace: true}">
             <v-list-item-icon><v-icon>mdi-account-tie</v-icon></v-list-item-icon>
             <v-list-item-title>Сотрудники</v-list-item-title>
           </v-list-item>

@@ -41,6 +41,8 @@ switch ($q){
     case "staffing":
         $data = staffing( $request["params"] );
         break;
+    case "employees":
+        $data = employees( $request["params"] );
     default:
         $valid = false;
 }   //switch ($q...
@@ -312,8 +314,11 @@ function divisions(){
     return $res;
 }
 
-
-function users(){
+/**
+ * Users oops
+ * @param array params for oops
+ */
+function users($params = false){
     $order = array('sort' => 'asc');
     $tmp = 'sort';
     $res = array();
@@ -329,7 +334,7 @@ function users(){
 
 /**
  * Staff`s oop`s
- * @param type $params
+ * @param array $params
  * @return boolean
  */
 function staffing($params){
@@ -383,4 +388,46 @@ function staffing($params){
     
 }   //staffing
 
+/**
+ * Employees oop`s
+ * @param array $params
+ * @return boolean
+ */
+function employees($params){
+    $hlbtId = hlbtByName('employees');
+    if ($hlbtId < 1){
+        return false;
+    }
+    
+    $res = array();
+    $hlblock = HLBT::getById($hlbtId)->fetch();
+    $entity = HLBT::compileEntity($hlblock);
+    $entity_data_class = $entity->getDataClass();
+    if ( isset($params) ){
+        switch($params["action"]){
+            case "save":
+                break;
+        }
+    } else {
+        $arUsers = users();
+        $rsData = $entity_data_class::getList(array(
+            'select' => array('*'),
+            'order' => array('UF_NAME' => 'ASC'),
+        ));
+        while($el = $rsData->fetch()){
+            $u = false;
+            foreach ($arUsers as $_u){
+                if ($_u["ID"] === $el["UF_UID"]){
+                    $u = $_u;
+                    break;
+                }
+            }
+            $el["USER"] = $u;
+            $res[] = $el;
+        }
+    }
+
+    return $res;
+
+}   //employees
 ?>

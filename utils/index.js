@@ -16,7 +16,8 @@ const DIA_MODES = {
     "reday": 2,
     "dvs": 3,
     "user": 4,
-    "staff": 5
+    "staff": 5,
+    "emp": 6
 };
 
 /**
