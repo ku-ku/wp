@@ -3,6 +3,7 @@
               v-model="show"
               max-width="800">
         <v-toolbar dark
+                   dense
                    color="primary">
             <v-icon small>{{has('add') ? 'mdi-plus':'mdi-file-document-edit'}}</v-icon>&nbsp;
             {{has('add') ? 'Новая запись' : 'Редактирование'}}
@@ -99,10 +100,6 @@ export default {
             this.show = (new Date()).getTime();
             this.$nextTick(()=>{
                 this.$refs["form"].use(item);
-                const inp = $(this.$el).find("input").get(0);
-                if ( (!!inp) && (typeof inp.focus !== "undefined") ){
-                    inp.focus();
-                }
             });
         },
         save(){

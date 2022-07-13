@@ -2,7 +2,8 @@
     <v-text-field :label="label"
                   v-model="text"
                   :error="!valid"
-                  v-on:blur="validate">
+                  v-on:blur="validate"
+                  v-bind:class="{timed: type==='datetime'}">
         <template v-slot:append-outer>
             <v-menu ref="menu"
                     v-model="menu"
@@ -29,7 +30,6 @@ window["$moment"] = moment;
 import Inputmask from "inputmask";
 import { empty } from "~/utils";
 
-const mask = 'DD.MM.YYYY HH:mm';
 
 export default {
     name: "WpDateInput",
@@ -40,6 +40,10 @@ export default {
         }, 
         value: {
             type: [String, Date]
+        },
+        type: {
+            type: String,
+            default: "datetime" /** date | datetime */
         }
     },
     data(){
@@ -51,19 +55,23 @@ export default {
     },
     mounted(){
         this.$nextTick(()=>{
-            Inputmask({mask: "99.99.9999 99:99"}).mask($(this.$el).find("input").get(0));
+            const mask = ("datetime"===this.type) ? "99.99.9999 99:99" : "99.99.9999";
+            Inputmask({mask: mask}).mask($(this.$el).find("input").get(0));
         });
     },
     computed: {
+        mask(){
+            return ("datetime"===this.type) ? "DD.MM.YYYY HH:mm" : "DD.MM.YYYY";
+        },
         /** for picker */
         date: {
             get(){
-                const m = moment(this.text, mask);
+                const m = moment(this.text, this.mask);
                 return ( !empty(this.text)&&m.isValid() ) ? m.toISOString() : null;
             },
             set(dt){
                 if (!empty(dt)){
-                    this.text = moment(dt, "YYYY-MM-DD").format(mask);
+                    this.text = moment(dt, "YYYY-MM-DD").format(this.mask);
                 }
                 this.menu = false;
                 $(this.$el).find("input").trigger("focus");
@@ -72,14 +80,11 @@ export default {
     },
     methods: {
         validate(){
-            const m = moment(this.text, mask);
-            if ( empty(this.text) ){
-                this.valid = true;
-            } else {
-                this.valid = m.isValid();
-            }
-            if (this.valid && !empty(this.text)) {
-                this.$emit('change', m.toDate() );
+            const _empty = empty(this.text);
+            const m = _empty ? moment.invalid() : moment(this.text, this.mask);
+            this.valid = _empty || m.isValid();
+            if (this.valid) {
+                this.$emit('change', _empty ? null : m.toDate() );
             }
             return this.valid;
         }
@@ -87,12 +92,24 @@ export default {
     watch: {
         value: {
             immediate: true, 
-            handler (val) {
-                console.log('set a dt', val);
+            handler(val) {
                 this.valid = true;
-                this.text = (val instanceof Date) ? moment(val).format(mask) : val;
+                if ( empty(val) ){
+                    this.text = null;
+                } else {
+                    const m = moment(val);
+                    this.text = m.isValid() ? m.format(this.mask) : val;
+                }
             }
         }
     }
 };
 </script>
+<style lang="scss" scoped>
+    .v-text-field{
+        max-width: 12rem;
+        &.timed{
+            max-width: 16rem;
+        }
+    }
+</style>
