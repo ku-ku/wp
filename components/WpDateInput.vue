@@ -39,8 +39,7 @@ export default {
             required: true
         }, 
         value: {
-            type: [String, Date],
-            required: true
+            type: [String, Date]
         }
     },
     data(){
