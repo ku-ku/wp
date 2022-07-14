@@ -24,6 +24,9 @@
         <template v-slot:header.actions>
             <div class="text-center"><v-icon>mdi-dots-vertical</v-icon></div>
         </template>
+        <template v-slot:item.ACTIVE="{ item }">
+            <v-icon v-if="('Y'===item.ACTIVE)" small>mdi-checkbox-outline</v-icon>
+        </template>
         <template v-slot:item.WP_PLANNING="{ item }">
             <v-icon v-if="(!!item.WP_PLANNING)" small>mdi-checkbox-outline</v-icon>
         </template>
@@ -113,8 +116,17 @@ export default{
             this.selected = [user];
             this.$refs["dlg"].open(user);
         },
-        del(user){
-
+        async del(user){
+            if ( !window.confirm(`ВНИМАНИЕ! Удалить пользователя "${user.LOGIN}"?`) ){
+                return;
+            }
+            try {
+                await this.$store.dispatch("data/rm", {users: user});
+                this.$fetch();
+            } catch(e){
+                console.log('ERR (del)', e);
+                $nuxt.msg({type:'warning', text: `ОШИБКА удаления: ${e?.message || 'неизвестная'}`});
+            }
         },
         /**
          * Event handle after savig

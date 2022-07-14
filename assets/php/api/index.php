@@ -351,15 +351,34 @@ function users($params = false){
                     unset($item["CONFIRM_PASSWORD"]);
                 }
                 $user = new CUser();
-                $res = ( intval($item["ID"]) > 0 ) ? $user->Update($item["ID"], $item) : $user->Add($item);
+                $res = false;
+                if (intval($item["ID"]) > 0){
+                    if ( $user->Update($item["ID"], $item) ){
+                        $res = $item["ID"];
+                    }
+                } else {
+                    $res = $user->Add($item);
+                }
                 
                 if ( empty($user->LAST_ERROR) ){
                     $res = array("success" => true, "ID" => $res);
                 } else {
-                    $res = array("success" => false, "error" => true, "ID" => $item["ID"], "message" => $user->LAST_ERROR);
+                    $res = array("success" => false, "error" => $user->LAST_ERROR, "ID" => $item["ID"]);
                 }
                 break;
             case "del":
+                $id = intval($params['ID']);
+                if ( $id > 0 ){
+                    $user = new CUser();
+                    $res = $user->Delete($id);
+                    if ($res!==false){
+                        $res = array("id" => $id, "success" => true);
+                    } else {
+                        $res = array("id" => $id, "error" => $user->LAST_ERROR);
+                    }
+                } else {
+                    $res = array("success" => false, "error"=>"Unknown item #");
+                }
                 break;
         }
     } else {
