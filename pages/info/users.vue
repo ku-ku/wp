@@ -49,8 +49,6 @@ import { DIA_MODES, empty } from "~/utils/";
 import WpDialog from "~/components/WpDialog.vue";
 import WpSearchField from "~/components/WpSearchField.vue";
 
-var hTimer = false;
-
 export default{
     name: 'WpUsers',
     comments:{
@@ -79,7 +77,9 @@ export default{
         };
     },
     async fetch(){
-        try{
+        this.s = null;
+        this.selected = [];
+        try {
             this.all = await this.$store.dispatch("data/list", "users");
         } catch(e){
             this.all = [];

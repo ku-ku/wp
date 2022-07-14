@@ -1,13 +1,20 @@
 <template>
 <v-container>
     <v-data-table :headers="headers"
-                  :items="all"
+                  :items="divisions"
                   :items-per-page="30"
-                  single-select>
+                  single-select
+                  dense
+                  item-key="ID"
+                  :footer-props="{itemsPerPageText:'строк/стр.'}"
+                  :loading="$fetchState.pending"
+                  :value="selected"
+                  v-on:click:row="selected = [$event]">
         <template v-slot:top>
             <v-toolbar flat>
                 <v-badge :content="get('count')">Структура</v-badge>
                 <v-spacer></v-spacer>
+                <wp-search-field v-on:filter="s = $event" />
                 <v-btn small outlined color="secondary"
                        v-on:click="edit">
                        Добавить подразделение&nbsp;<v-icon small>mdi-plus</v-icon>
@@ -16,6 +23,9 @@
         </template>
         <template v-slot:header.actions>
             <div class="text-center"><v-icon>mdi-dots-vertical</v-icon></div>
+        </template>
+        <template v-slot:item.UF_ACTIVE="{ item }">
+            
         </template>
         <template v-slot:item.actions="{ item }">
             <v-btn small icon v-on:click="edit(item)">
@@ -30,18 +40,15 @@
 </v-container>
 </template>
 <script>
-import { DIA_MODES } from "~/utils/";
+import { DIA_MODES, empty } from "~/utils/";
 import WpDialog from "~/components/WpDialog.vue";
+import WpSearchField from "~/components/WpSearchField.vue";
 
 export default {
     name: 'WpDivisions',
-    comments:{
+    comments: {
+        WpSearchField,
         WpDialog
-    },
-    async asyncData({store}){
-        return {
-            all: await store.dispatch("data/list", "divisions")
-        }
     },
     data(){
         return {
@@ -52,8 +59,36 @@ export default {
                 { text: 'Активно', value: 'UF_ACTIVE' },
                 { text: 'Порядок', value: 'UF_SORT' },
                 { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
-            ]
+            ],
+            all: [],
+            s: null,
+            selected: []
         };
+    },
+    async fetch(){
+        this.s = null;
+        this.selected = [];
+        try {
+            this.all = await this.$store.dispatch("data/list", "divisions");
+        } catch(e) {
+            this.all = [];
+            console.log('ERR (divisions)', e);
+        }
+    },
+    computed: {
+        divisions(){
+            if (!this.all){
+                return [];
+            }
+            if ( empty(this.s) ){
+                return this.all;
+            } else {
+                const re = new RegExp('(' + this.s + ')+', 'gi');
+                return this.all.filter( e => {
+                    return ((this.s===e.UF_CODE) || re.test(e.UF_NAME));
+                });
+            }
+        }
     },
     methods: {
         get(q){
@@ -65,10 +100,12 @@ export default {
         },
         edit(dvs){
             console.log('edit', dvs);
+            this.selected = [dvs];
             this.$refs["dlg"].open(dvs);
         },
         del(dvs){
             console.log('del', dvs);
+            this.selected = [dvs];
             if ( confirm('Подтвердите удаление для "' + dvs.UF_NAME + '"') ){
 
             }

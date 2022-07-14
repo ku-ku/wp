@@ -22,7 +22,7 @@
     }
 }
 
-table {
+.theme--light.v-data-table {
     & > thead > tr > th {
         vertical-align: top;
     }
@@ -31,6 +31,15 @@ table {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+    tbody {
+        tr.v-data-table__selected {
+            color: #fff;
+            background-color: var(--v-primary-base) !important;
+            & .v-icon{
+                color: #fff;
+            }
+        }
     }
 }
 

@@ -33,7 +33,7 @@ export default {
   components: true,
 
   buildModules: [
-    '@nuxtjs/vuetify',
+    '@nuxtjs/vuetify'
   ],
 
   modules: [
@@ -55,10 +55,11 @@ export default {
         target: "https://kubzsk.ru/wp/api/",
         pathRewrite: {"^/api/": ""}
     }
-},
+  },
   vuetify: {
     customVariables: ['~/assets/variables.scss'],
     theme: {
+      options: { customProperties: true },
       dark: false,
       light: true,
       themes: {
