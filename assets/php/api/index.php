@@ -33,7 +33,7 @@ switch ($q){
         $data = user();
         break;
     case "divisions":
-        $data = divisions();
+        $data = divisions($request["params"]);
         break;
     case "users":
         $data = users( $request["params"] );
@@ -296,17 +296,47 @@ function user(){
     return array( "id" => -1 );
 }   //user
 
-function divisions(){
+function divisions($params = false){
     $hlbtId = hlbtByName('department_codes');
     $res = array();
-    if ($hlbtId > 0){
-        $hlblock = HLBT::getById($hlbtId)->fetch();
-        $entity = HLBT::compileEntity($hlblock);
-        $entity_data_class = $entity->getDataClass();
-            $rsData = $entity_data_class::getList(array(
+    if ($hlbtId < 1){
+        return array("success" => false, "error" => "No high-load table exists");
+    }
+    $hlblock = HLBT::getById($hlbtId)->fetch();
+    $entity = HLBT::compileEntity($hlblock);
+    $entity_data_class = $entity->getDataClass();
+
+    if ( isset($params) ){
+        switch($params["action"]){
+            case "save":
+                $item = $params["item"];
+                unset($item["isTrusted"]);
+                
+                $obResult = ( intval($item['ID']) > 0 ) 
+                                ? $entity_data_class::update($item['ID'], $item) 
+                                : $entity_data_class::add($item);
+                
+                $res = array("success" => $obResult->isSuccess(), "ID"=> $obResult->getID() );
+                break;
+            case "del":
+                $id = intval($params['ID']);
+                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
+                if (!!$res){
+                    if ( $res->isSuccess() ){
+                        $res = array("id" => $id, "success"=> true);
+                    } else {
+                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
+                    }
+                } else {
+                    $res = array("success" => false, "error"=>"Unknown item #");
+                }
+                break;
+        }
+    } else {
+        $rsData = $entity_data_class::getList(array(
                     'select' => array('*'),
                     'order' => array('UF_SORT' => 'ASC'),
-            ));
+        ));
         while($el = $rsData->fetch()){
             $res[] = $el;
         }

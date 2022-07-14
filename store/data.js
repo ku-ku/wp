@@ -18,7 +18,7 @@ export const mutations = {
     },
     /**
      * Update | set one object to store
-     * @param {Object} payload exampl: {users|divisions:{ID+, ...}}
+     * @param {Object} payload exampl: { users|divisions|...: {ID+, ...} }
      */
     upd(state, payload){
         Object.keys(payload).map( k=>{

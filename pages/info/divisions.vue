@@ -25,7 +25,7 @@
             <div class="text-center"><v-icon>mdi-dots-vertical</v-icon></div>
         </template>
         <template v-slot:item.UF_ACTIVE="{ item }">
-            
+            <v-icon v-if="(!!item.UF_ACTIVE)" small>mdi-checkbox-outline</v-icon>
         </template>
         <template v-slot:item.actions="{ item }">
             <v-btn small icon v-on:click="edit(item)">
@@ -36,7 +36,8 @@
             </v-btn>
         </template>
     </v-data-table>
-    <wp-dialog ref="dlg" :mode="DIA_MODES.dvs" />
+    <wp-dialog ref="dlg" :mode="DIA_MODES.dvs" 
+               v-on:change="change" />
 </v-container>
 </template>
 <script>
@@ -56,7 +57,7 @@ export default {
             headers: [
                 { text: 'Код', value: 'UF_CODE' },
                 { text: 'Наименование', value: 'UF_NAME' },
-                { text: 'Активно', value: 'UF_ACTIVE' },
+                { text: 'Активно', value: 'UF_ACTIVE', cellClass: "text-center" },
                 { text: 'Порядок', value: 'UF_SORT' },
                 { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
             ],
@@ -99,16 +100,30 @@ export default {
             return false;
         },
         edit(dvs){
-            console.log('edit', dvs);
             this.selected = [dvs];
             this.$refs["dlg"].open(dvs);
         },
-        del(dvs){
-            console.log('del', dvs);
+        async del(dvs){
             this.selected = [dvs];
-            if ( confirm('Подтвердите удаление для "' + dvs.UF_NAME + '"') ){
-
+            if ( !confirm('Подтвердите удаление для "' + dvs.UF_NAME + '"') ){
+                return;
             }
+            try {
+                await this.$store.dispatch("data/rm", {divisions: dvs});
+                this.$fetch();
+            } catch(e){
+                console.log('ERR (del)', e);
+                $nuxt.msg({type:'warning', text: `ОШИБКА удаления: ${e?.message || 'неизвестная'}`});
+            }
+        },  //del
+        change(item){
+            this.$fetch();
+            this.$nextTick(()=>{
+                const n = this.all.findIndex( e => e.ID === item.ID );
+                if ( n > -1 ){
+                    this.selected = [this.all[n]];
+                }
+            });
         }
     }
 }
