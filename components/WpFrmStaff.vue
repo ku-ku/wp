@@ -5,12 +5,23 @@
             <v-text-field label="Наименование" 
                           v-model="item.UF_NAME"
                           clearable
-                          :error="errs.name"
-                          required></v-text-field>
+                          :error="errs.UF_NAME"
+                          hide-details
+                          required>
+            </v-text-field>
         </v-col>
     </v-row>
     <v-row>
-        <v-col cols="12">
+        <v-col cols="6">
+            <v-text-field 
+                v-model="item.UF_SORT"
+                label="Порядок сортировки"
+                :error="errs.UF_SORT"
+                style="max-width: 10rem;"
+                hide-details>
+            </v-text-field>
+        </v-col>
+        <v-col cols="6">
             <v-checkbox
                 v-model="item.UF_DISABLE"
                 label="Не использовать"
@@ -32,15 +43,17 @@ export default {
     data(){
         return {
             item: {},
-            errs: {
-                name: false
-            }
+            errs: {}
         };
     },
     methods: {
         validate(){
             if ( empty(this.item.UF_NAME) ){
-                this.errs["name"] = true;
+                this.errs["UF_NAME"] = true;
+                return false;
+            }
+            if ( !(Number(this.item.UF_SORT) > 0) ){
+                this.errs["UF_SORT"] = true;
                 return false;
             }
             return true;

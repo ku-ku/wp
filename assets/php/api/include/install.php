@@ -156,6 +156,20 @@ function install(){
                     "SETTINGS" => array(
                         "DEFAULT_VALUE" => "0"
                     )
+                ),
+                'UF_SORT'=>Array(
+                    'ENTITY_ID' => $UFObject,
+                    'FIELD_NAME' => 'UF_SORT',
+                    'USER_TYPE_ID' => 'integer',
+                    'MANDATORY' => 'Y',
+                    "EDIT_FORM_LABEL" => Array('ru'=>'Порядок', 'en'=>'Sort order'), 
+                    "LIST_COLUMN_LABEL" => Array('ru'=>'Порядок', 'en'=>'Sort order'),
+                    "LIST_FILTER_LABEL" => Array('ru'=>'Порядок', 'en'=>'Sort order'), 
+                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
+                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>''),
+                    "SETTINGS" => array(
+                        "DEFAULT_VALUE" => "100"
+                    )
                 )
             );
             $arSavedFields = array();

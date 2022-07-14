@@ -355,10 +355,14 @@ function staffing($params){
                 $item = $params["item"];
                 $fields = array( 
                     'UF_NAME' => $item["UF_NAME"],
-                    'UF_DISABLE' => !!$item["UF_DISABLE"] ? 1 : 0
+                    'UF_DISABLE' => !!$item["UF_DISABLE"] ? 1 : 0,
+                    'UF_SORT' => intval($item["UF_SORT"])
                 );
                 
-                $obResult = ( intval($item['ID']) > 0 ) ? $entity_data_class::update($item['ID'], $fields) : $entity_data_class::add($fields);
+                $obResult = ( intval($item['ID']) > 0 ) 
+                                ? $entity_data_class::update($item['ID'], $fields) 
+                                : $entity_data_class::add($fields);
+                
                 $res = array("success" => $obResult->isSuccess(), "ID"=> $obResult->getID() );
                 break;
             case "del":
@@ -378,7 +382,7 @@ function staffing($params){
     } else {
         $rsData = $entity_data_class::getList(array(
                         'select' => array('*'),
-                        'order' => array('UF_NAME' => 'ASC'),
+                        'order' => array('UF_SORT' => 'ASC', 'UF_NAME' => 'ASC')
         ));
         while($el = $rsData->fetch()){
             $res[] = $el;

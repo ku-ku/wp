@@ -69,6 +69,7 @@ export default {
             s: null,
             headers: [
                 { text: 'Наименование', value: 'UF_NAME' },
+                { text: 'Порядок', value: 'UF_SORT' },
                 { text: 'Откл', value: 'UF_DISABLE', cellClass: "col-fixed text-center" },
                 { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
             ]
