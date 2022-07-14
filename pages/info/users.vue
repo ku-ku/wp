@@ -4,21 +4,17 @@
                   :items="users"
                   :items-per-page="30"
                   single-select
-                  dense>
+                  dense
+                  item-key="ID"
+                  :footer-props="{itemsPerPageText:'строк/стр.'}"
+                  :loading="$fetchState.pending"
+                  :value="selected"
+                  v-on:click:row="selected = [$event]">
         <template v-slot:top>
             <v-toolbar flat>
                 <v-badge :content="get('count')">Пользователи</v-badge>
                 <v-spacer></v-spacer>
-                <v-text-field v-on:input="filtering" 
-                              placeholder="поиск"
-                              dense
-                              clearable
-                              style="max-width:15rem;margin-right:1rem;"
-                              hide-details>
-                    <template v-slot:append>
-                        <v-icon>mdi-magnify</v-icon>
-                    </template>
-                </v-text-field>
+                <wp-search-field v-on:filter="s = $event" />
                 <v-btn small outlined color="secondary"
                        v-on:click="edit">
                        Добавить пользователя&nbsp;<v-icon small>mdi-plus</v-icon>
@@ -27,6 +23,9 @@
         </template>
         <template v-slot:header.actions>
             <div class="text-center"><v-icon>mdi-dots-vertical</v-icon></div>
+        </template>
+        <template v-slot:item.WP_PLANNING="{ item }">
+            <v-icon v-if="(!!item.WP_PLANNING)" small>mdi-checkbox-outline</v-icon>
         </template>
         <template v-slot:item.actions="{ item }">
             <v-btn small icon v-on:click="edit(item)">
@@ -37,24 +36,23 @@
             </v-btn>
         </template>
     </v-data-table>
-    <wp-dialog ref="dlg" :mode="DIA_MODES.user" />
+    <wp-dialog ref="dlg" 
+               :mode="DIA_MODES.user" 
+               v-on:change="change" />
 </v-container>
 </template>
 <script>
 import { DIA_MODES, empty } from "~/utils/";
 import WpDialog from "~/components/WpDialog.vue";
+import WpSearchField from "~/components/WpSearchField.vue";
 
 var hTimer = false;
 
 export default{
     name: 'WpUsers',
     comments:{
-        WpDialog
-    },
-    async asyncData({store}) {
-        return {
-            all: await store.dispatch("data/list", "users")
-        }
+        WpDialog,
+        WpSearchField
     },
     data(){
         return {
@@ -66,13 +64,24 @@ export default{
                 { text: 'Фамилия', value: 'LAST_NAME' },
                 { text: 'Отчество', value: 'SECOND_NAME' },
                 { text: 'e-mail', value: 'EMAIL' },
-                { text: 'Тел.', value: 'PERSONAL_PHONE' },
-                { text: 'А', value: 'ACTIVE' },
+                { text: 'Тел.',   value: 'PERSONAL_PHONE' },
+                { text: 'А',      value: 'ACTIVE' },
+                { text: 'ПЛ.',    value: 'WP_PLANNING' },
                 { text: 'Посл.вход', value: 'LAST_LOGIN',  cellClass: "col-fixed"},
                 { text: 'Примечание', value: 'PERSONAL_NOTES',  cellClass: "col-fixed" },
                 { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
-            ]
+            ],
+            selected: [],
+            all: []
         };
+    },
+    async fetch(){
+        try{
+            this.all = await this.$store.dispatch("data/list", "users");
+        } catch(e){
+            this.all = [];
+            console.log('ERR (Users)', e);
+        }
     },
     computed: {
         users(){
@@ -100,19 +109,19 @@ export default{
             return false;
         },
         edit(user){
+            console.log('edit', user);
+            this.selected = [user];
             this.$refs["dlg"].open(user);
         },
         del(user){
 
         },
-        filtering(s){
-            if (!!hTimer){
-                clearTimeout(hTimer);
-            }
-            hTimer = setTimeout(()=>{
-                hTimer = false;
-                this.s = s;
-            }, 500);
+        /**
+         * Event handle after savig
+         */
+        change(item){
+            console.log('change', item);
+            this.$fetch();
         }
     }
 }

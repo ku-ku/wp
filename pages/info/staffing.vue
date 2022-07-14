@@ -53,14 +53,6 @@ export default {
         WpDialog,
         WpSearchField
     },
-    async fetch(){
-        try {
-            this.all = await this.$store.dispatch("data/list", "staffing");
-        } catch(e){
-            this.all = [];
-            console.log('ERR (Staffing)', e);
-        }
-    },
     data(){
         return {
             DIA_MODES,
@@ -74,6 +66,14 @@ export default {
                 { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
             ]
         };
+    },
+    async fetch(){
+        try {
+            this.all = await this.$store.dispatch("data/list", "staffing");
+        } catch(e){
+            this.all = [];
+            console.log('ERR (Staffing)', e);
+        }
     },
     computed: {
         staffs(){

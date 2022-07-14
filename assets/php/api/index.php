@@ -36,7 +36,7 @@ switch ($q){
         $data = divisions();
         break;
     case "users":
-        $data = users();
+        $data = users( $request["params"] );
         break;
     case "staffing":
         $data = staffing( $request["params"] );
@@ -319,16 +319,61 @@ function divisions(){
  * @param array params for oops
  */
 function users($params = false){
-    $order = array('sort' => 'asc');
-    $tmp = 'sort';
-    $res = array();
-    $params = array("ID", "ACTIVE", "LOGIN", "NAME", "SECOND_NAME", "LAST_NAME", "EMAIL", "PERSONAL_PHONE", "PERSONAL_NOTES", "IS_ONLINE");
+    $res = array(); //returning
     
-    $filter = array();
-    $rsUsers = CUser::GetList($order, $tmp, $filter, $params);
-    while( $el = $rsUsers->Fetch() ) {
-        $res[] = $el;
-    };
+    //Check group 
+    $groupId = "WP_PLANNING";
+    $f = "ID";
+    $sort = "ASC";
+    $filter = array("STRING_ID"=>$groupId);
+    $group = CGroup::GetList($f, $sort, $filter)->fetch();
+    $planningGroupId = (!!$group) ? $group["ID"] : -1;
+    
+    if ( isset($params) ){
+        switch($params["action"]){
+            case "save":
+                $item = $params["item"];
+                $groups = intval($item["ID"]) > 0 ? CUser::GetUserGroup($item["ID"]) : array();
+                if (!!$item["WP_PLANNING"]){
+                    $groups[] = $planningGroupId;
+                } else {
+                    $n = array_search($planningGroupId, $groups);
+                    if ($n !== false){
+                        unset($groups[$n]);
+                    }
+                }
+                $item["GROUP_ID"] = $groups;
+                if ( intval($item["ID"]) < 1 ){
+                    $item["PASSWORD"] = "12345678";
+                    $item["CONFIRM_PASSWORD"] = $item["PASSWORD"];
+                } else {
+                    unset($item["PASSWORD"]);
+                    unset($item["CONFIRM_PASSWORD"]);
+                }
+                $user = new CUser();
+                $res = ( intval($item["ID"]) > 0 ) ? $user->Update($item["ID"], $item) : $user->Add($item);
+                
+                if ( empty($user->LAST_ERROR) ){
+                    $res = array("success" => true, "ID" => $res);
+                } else {
+                    $res = array("success" => false, "error" => true, "ID" => $item["ID"], "message" => $user->LAST_ERROR);
+                }
+                break;
+            case "del":
+                break;
+        }
+    } else {
+        $order = array('sort' => 'asc');
+        $tmp = 'sort';
+        $params = array("ID", "ACTIVE", "LOGIN", "NAME", "SECOND_NAME", "LAST_NAME", "EMAIL", "PERSONAL_PHONE", "PERSONAL_NOTES", "IS_ONLINE");
+        $filter = array();
+        $rsUsers = CUser::GetList($order, $tmp, $filter, $params);
+        
+        while( $el = $rsUsers->Fetch() ) {
+            $el["WP_PLANNING"] = in_array($planningGroupId, CUser::GetUserGroup($el["ID"])) ? "Y" : null;
+            $res[] = $el;
+        };
+    }
     return $res;
 }
 

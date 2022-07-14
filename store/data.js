@@ -18,7 +18,7 @@ export const mutations = {
     },
     /**
      * Update | set one object to store
-     * @param {Object} payload exampl: {user|divisions:{ID+, ...}}
+     * @param {Object} payload exampl: {users|divisions:{ID+, ...}}
      */
     upd(state, payload){
         Object.keys(payload).map( k=>{
@@ -54,6 +54,10 @@ export const mutations = {
     
 
 export const actions = {
+    /**
+     * Current user info
+     * @returns {Promise}
+     */
     async user({state, commit}){
         return new Promise((resolve, reject)=>{
             if (!!state.user){
