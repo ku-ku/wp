@@ -213,7 +213,7 @@ function install(){
             }
             echo sprintf('#%d %s successed', $id, 'Employees') . PHP_EOL;
             
-            $dvsIds = fieldIds('DepartmentCode', 'UF_NAME');
+            $dvsIds = fieldIds('department_codes', 'UF_NAME');
             $stfIds = fieldIds('Staffing', 'UF_NAME');
             
             $UFObject = 'HLBLOCK_'.$id;
@@ -229,7 +229,7 @@ function install(){
                     "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
                     "HELP_MESSAGE" => Array('ru'=>'', 'en'=>''),
                 ),
-                'UF_USER'=>Array(
+                'UF_UID'=>Array(
                     'ENTITY_ID' => $UFObject,
                     'FIELD_NAME' => 'UF_UID',
                     'USER_TYPE_ID' => 'integer',
@@ -237,17 +237,6 @@ function install(){
                     "EDIT_FORM_LABEL" => Array('ru'=>'Пользователь #', 'en'=>'User'), 
                     "LIST_COLUMN_LABEL" => Array('ru'=>'Пользователь #', 'en'=>'User Id'),
                     "LIST_FILTER_LABEL" => Array('ru'=>'Пользователь #', 'en'=>'User Id'), 
-                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
-                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>''),
-                ),
-                'UF_TITLE'=>Array(
-                    'ENTITY_ID' => $UFObject,
-                    'FIELD_NAME' => 'UF_TITLE',
-                    'USER_TYPE_ID' => 'string',
-                    'MANDATORY' => 'Y',
-                    "EDIT_FORM_LABEL" => Array('ru'=>'Пользователь', 'en'=>'User'), 
-                    "LIST_COLUMN_LABEL" => Array('ru'=>'Пользователь', 'en'=>'User'),
-                    "LIST_FILTER_LABEL" => Array('ru'=>'Пользователь', 'en'=>'User'), 
                     "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
                     "HELP_MESSAGE" => Array('ru'=>'', 'en'=>''),
                 ),

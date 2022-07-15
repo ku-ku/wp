@@ -91,6 +91,30 @@ export const actions = {
         });
     },   //list
     /**
+     * Read one entity by ID
+     * @param {Object} payload {employees: <ID>}
+     * @returns {Promise}
+     */
+    async one({commit}, payload){
+        var q = "none", params = {ID: -1};
+        Object.keys(payload).map( k => {
+            q = k;
+            params.ID=payload[k];
+        });
+        
+        return new Promise((resolve, reject)=>{
+            $nuxt.api(q, params).then(res => {
+                        const o = {};
+                        o[q] = res;
+                        commit("upd", o);
+                        resolve(res);
+                    }).catch(e => {
+                        console.log('ERR (data)', e);
+                        reject(e);
+                    });
+        });
+    },  //one
+    /**
      * Change data-action
      * @param {Object} payload item for updating
      * @returns {Promise}
@@ -99,14 +123,25 @@ export const actions = {
         return new Promise((resolve, reject)=>{
             Object.keys(payload).map( k => {
                 const item = payload[k];
+                
+                //check date`s values
+                Object.keys(item).map( f => {
+                    if (item[f] instanceof Date){
+                        item[f] = item[f].toISOString();
+                    }
+                } );
+                
                 $nuxt.api(k, {
                             action: "save",
                             item
                 }).then( data => {
                     if (!!data.success){
-                        payload[k].ID = data.ID;
-                        commit("upd", payload);
-                        resolve();
+                        const o = {};
+                        o[k] = (data.items?.length > 0) 
+                                    ? data.items[0]
+                                    : Object.assign({ID: data.ID}, item);
+                        commit("upd", o);
+                        resolve(o);
                     } else {
                         throw {message: data.error};
                     }

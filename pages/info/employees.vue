@@ -1,5 +1,5 @@
 <template>
-    <v-container>
+    <v-container fluid>
         <v-data-table :headers="headers"
                       :items="employees"
                       :items-per-page="30"
@@ -35,6 +35,12 @@
         <template v-slot:item.UF_DISABLE="{ item }">
             <v-icon v-if="Number(item.UF_DISABLE)>0">mdi-checkbox-outline</v-icon>
         </template>
+        <template v-slot:item.UF_ADDED="{ item }">
+            {{ get('dt', item.UF_ADDED) }}
+        </template>
+        <template v-slot:item.UF_END="{ item }">
+            {{ get('dt', item.UF_END) }}
+        </template>
     </v-data-table>
     <wp-dialog ref="dlg" 
                :mode="DIA_MODES.emp" 
@@ -46,6 +52,7 @@
 import { DIA_MODES, empty } from "~/utils/";
 import WpDialog from "~/components/WpDialog.vue";
 import WpSearchField from "~/components/WpSearchField.vue";
+import moment from "moment";
 
 export default {
     name: 'WpEmployees',
@@ -68,8 +75,11 @@ export default {
             selected: [],
             s: null,
             headers: [
-                { text: 'Наименование', value: 'UF_NAME' },
-                { text: 'Откл', value: 'UF_DISABLE', cellClass: "col-fixed text-center" },
+                { text: 'ФИО', value: 'USER_NAME' },
+                { text: 'Подразделение', value: 'DVS_NAME' },
+                { text: 'Должность', value: 'STAFF_NAME' },
+                { text: 'Дата приема', value: 'UF_ADDED' },
+                { text: 'Дата увольнения', value: 'UF_END' },
                 { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
             ]
         };
@@ -90,17 +100,17 @@ export default {
         }   //staffs
     },
     methods: {
-        get(q){
+        get(q, v){
             switch(q){
                 case "count":
                     return this.employees?.length;
+                case "dt":
+                    return (!!v) ? moment(v).format('DD.MM.YYYY') : null;
             }
             return false;
         },
-        sel(item){
-            
-        },
         edit(e){
+            console.log('editing', e);
             this.selected = [e];
             this.$refs["dlg"].open(e);
         },
@@ -121,7 +131,20 @@ export default {
          */
         change(item){
             console.log('change', item);
-            this.$fetch();
+            const id = item.ID;
+            (async()=>{
+                try {
+                    await this.$fetch();
+                    this.$nextTick(()=>{
+                        const n = this.all.findIndex( e => e.ID === id );
+                        if ( n > -1 ){
+                            this.selected = [this.all[n]];
+                        }
+                    });
+                } catch(e){
+                    console.log('ERR (change)', e);
+                }
+            })();
         }
     }
 };

@@ -33,11 +33,13 @@
         text-overflow: ellipsis;
     }
     tbody {
-        tr.v-data-table__selected {
-            color: #fff;
-            background-color: var(--v-primary-base) !important;
-            & .v-icon{
+        tr {
+            &.v-data-table__selected {
                 color: #fff;
+                background-color: var(--v-primary-base) !important;
+                & .v-icon{
+                    color: #fff;
+                }
             }
         }
     }

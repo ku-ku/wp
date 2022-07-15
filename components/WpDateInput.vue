@@ -16,6 +16,8 @@
                     <v-btn icon v-on="on"><v-icon small>mdi-calendar</v-icon></v-btn>
                 </template>
                 <v-date-picker v-model="date"
+                               picker-date
+                               show-current
                                no-title
                                locale="ru-ru"
                                scrollable>
@@ -39,7 +41,7 @@ export default {
             required: true
         }, 
         value: {
-            type: [String, Date]
+            type: [Date, Number, String]
         },
         type: {
             type: String,
@@ -51,7 +53,7 @@ export default {
             menu: false,
             text: null,
             valid: true
-        }
+        };
     },
     mounted(){
         this.$nextTick(()=>{
@@ -93,12 +95,13 @@ export default {
         value: {
             immediate: true, 
             handler(val) {
+                console.log('set date', val);
                 this.valid = true;
                 if ( empty(val) ){
                     this.text = null;
                 } else {
                     const m = moment(val);
-                    this.text = m.isValid() ? m.format(this.mask) : val;
+                    this.text = m.isValid() ? m.format(this.mask) : null;
                 }
             }
         }

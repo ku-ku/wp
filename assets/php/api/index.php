@@ -33,16 +33,17 @@ switch ($q){
         $data = user();
         break;
     case "divisions":
-        $data = divisions($request["params"]);
+        $data = divisions( isset($request["params"]) ? $request["params"] : false );
         break;
     case "users":
-        $data = users( $request["params"] );
+        $data = users( isset($request["params"]) ? $request["params"] : false );
         break;
     case "staffing":
-        $data = staffing( $request["params"] );
+        $data = staffing( isset($request["params"]) ? $request["params"] : false );
         break;
     case "employees":
-        $data = employees( $request["params"] );
+        $data = employees( isset($request["params"]) ? $request["params"] : false );
+        break;
     default:
         $valid = false;
 }   //switch ($q...
@@ -306,7 +307,7 @@ function divisions($params = false){
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
 
-    if ( isset($params) ){
+    if ( $params !== false ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -359,7 +360,7 @@ function users($params = false){
     $group = CGroup::GetList($f, $sort, $filter)->fetch();
     $planningGroupId = (!!$group) ? $group["ID"] : -1;
     
-    if ( isset($params) ){
+    if ( $params !== false ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -431,7 +432,7 @@ function users($params = false){
  * @param array $params
  * @return boolean
  */
-function staffing($params){
+function staffing($params = false){
     
     $hlbtId = hlbtByName('staffing');
     if ($hlbtId < 1){
@@ -443,7 +444,7 @@ function staffing($params){
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
     
-    if ( isset($params) ){
+    if ( $params !== false ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -491,8 +492,10 @@ function staffing($params){
  * @param array $params
  * @return boolean
  */
-function employees($params){
+function employees($params = false){
+   
     $hlbtId = hlbtByName('employees');
+    
     if ($hlbtId < 1){
         return false;
     }
@@ -501,26 +504,89 @@ function employees($params){
     $hlblock = HLBT::getById($hlbtId)->fetch();
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
-    if ( isset($params) ){
+    if ( ($params !== false) && is_array($params["item"]) ){
         switch($params["action"]){
             case "save":
+                $item = $params["item"];
+                
+                $row  = array(
+                    "UF_UID"  => $item["UF_UID"],
+                    "UF_DVS"  => $item["UF_DVS"],
+                    "UF_STAFF"=> $item["UF_STAFF"],
+                    "UF_ADDED"=> Bitrix\Main\Type\Date::createFromTimestamp(strtotime($item["UF_ADDED"])),
+                    "UF_END"  => !!$item["UF_END"] ? Bitrix\Main\Type\Date::createFromTimestamp(strtotime($item["UF_END"])) : null
+                );
+                
+                $obResult = ( intval($item['ID']) > 0 ) 
+                                ? $entity_data_class::update($item['ID'], $row) 
+                                : $entity_data_class::add($row);
+                $res = array(
+                                "success" => $obResult->isSuccess(), 
+                                "ID"=> $obResult->getID(),
+                                "error" => $obResult->isSuccess() ? null : $obResult->getErrorMessages()
+                            );
+                
+                if ( $obResult->isSuccess() ){
+                    $res["items"] = employees(array("ID" => $obResult->getID()));
+                }
+                break;
+            case "del":
+                $id = intval($params['ID']);
+                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
+                if (!!$res){
+                    if ( $res->isSuccess() ){
+                        $res = array("id" => $id, "success"=> true);
+                    } else {
+                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
+                    }
+                } else {
+                    $res = array("success" => false, "error"=>"Unknown item #");
+                }
                 break;
         }
     } else {
-        $arUsers = users();
-        $rsData = $entity_data_class::getList(array(
-            'select' => array('*'),
-            'order' => array('UF_NAME' => 'ASC'),
-        ));
+        $dirs = new stdClass();
+        $dirs->users = array_slice(users(false), 0);
+        $dirs->staffs= array_slice(staffing(false), 0);
+        $dirs->dvss  = array_slice(divisions(false), 0);
+        
+        $args = array( 'select' => array('*') );
+        if (
+                (!!$params) && (intval($params["ID"])>0)
+           ){
+            $args['filter'] = array('=ID' => $params["ID"]);
+        }
+        
+        $rsData = $entity_data_class::getList($args);
         while($el = $rsData->fetch()){
-            $u = false;
-            foreach ($arUsers as $_u){
-                if ($_u["ID"] === $el["UF_UID"]){
-                    $u = $_u;
+            
+            foreach ($dirs->users as $_u){
+                if ($el["UF_UID"] == $_u["ID"]){
+                    $el["USER_NAME"] = sprintf("%s %s %s", $_u["LAST_NAME"], $_u["NAME"], $_u["SECOND_NAME"]);
                     break;
                 }
             }
-            $el["USER"] = $u;
+            if (!!$el["UF_STAFF"]){
+                foreach ($dirs->staffs as $_s){
+                    if ($el["UF_STAFF"] == $_s["ID"]){
+                        $el["STAFF_NAME"] = $_s["UF_NAME"];
+                        break;
+                    }
+                }
+            }
+            if (!!$el["UF_DVS"]){
+                foreach ($dirs->dvss as $_d){
+                    if ($el["UF_DVS"] == $_d["ID"]){
+                        $el["DVS_NAME"] = $_d["UF_NAME"];
+                        break;
+                    }
+                }
+            }
+            
+            $el["UF_ADDED"] = (!!$el["UF_ADDED"]) ? $el["UF_ADDED"]->getTimestamp()*1000 : null;
+            $el["UF_END"] = (!!$el["UF_END"]) ? $el["UF_END"]->getTimestamp()*1000 : null;
+            
+            
             $res[] = $el;
         }
     }
