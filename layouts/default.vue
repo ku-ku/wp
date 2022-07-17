@@ -15,6 +15,10 @@
             <v-list-item-icon><v-icon>mdi-calendar-month</v-icon></v-list-item-icon>
             <v-list-item-title>План мероприятий</v-list-item-title>
           </v-list-item>
+          <v-list-item :to="{path:'/calendar'}">
+            <v-list-item-icon><v-icon>mdi-calendar-text</v-icon></v-list-item-icon>
+            <v-list-item-title>Календарь</v-list-item-title>
+          </v-list-item>
           <v-list-item :to="{path: '/info/divisions', replace: true}">
             <v-list-item-icon><v-icon>mdi-office-building</v-icon></v-list-item-icon>
             <v-list-item-title>Структура</v-list-item-title>

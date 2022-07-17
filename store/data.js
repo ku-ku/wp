@@ -1,9 +1,16 @@
 import { empty } from "~/utils";
+const A_STATUSES = [
+    {ID: 0, name: 'Формирование'},
+    {ID: 1, name: 'Утверждено'},
+    {ID: 3, name: 'Проведено'},
+    {ID: 9, name: 'Отменено'}
+];
 
 export const state = ()=>({
     user: null,
     divisions: null,
-    staffing: null
+    staffing: null,
+    statuses: A_STATUSES
 });
 
 export const mutations = {
