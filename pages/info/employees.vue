@@ -75,7 +75,7 @@ export default {
             selected: [],
             s: null,
             headers: [
-                { text: 'ФИО', value: 'USER_NAME' },
+                { text: 'ФИО', value: 'UF_EMPNAME' },
                 { text: 'Подразделение', value: 'DVS_NAME' },
                 { text: 'Должность', value: 'STAFF_NAME' },
                 { text: 'Дата приема', value: 'UF_ADDED' },

@@ -3,8 +3,8 @@
     <v-row>
         <v-col cols="4">
             <wp-date-input label="Дата, время проведения"
-                            :value="item.regDt"
-                            v-on:change="set('regDt', $event)">
+                            :value="item.UF_ADT"
+                            v-on:change="set('UF_ADT', $event)">
             </wp-date-input>
         </v-col>
         <v-col cols="8">
@@ -12,7 +12,7 @@
                             full-width
                             label="Подразделение"
                             no-data-text="нет данных"
-                            v-model="item.DVS"
+                            v-model="item.UF_DVS"
                             hide-no-data
                             item-value="ID"
                             clearable
@@ -36,7 +36,7 @@
     <v-row>
         <v-col cols="4">
             <v-checkbox
-                v-model="item.grAttr"
+                v-model="item.UF_GRATTR"
                 label="Согласно графику"
                 value="1"
                 color="primary"
@@ -45,7 +45,7 @@
         </v-col>
         <v-col cols="4">
             <v-checkbox
-                v-model="item.dayAttr"
+                v-model="item.UF_DAYATTR"
                 label="В течении дня"
                 value="1"
                 color="primary"
@@ -54,7 +54,7 @@
         </v-col>
         <v-col cols="4">
             <v-checkbox
-                v-model="item.specAttr"
+                v-model="item.UF_SPECATTR"
                 label="Особой важности"
                 color="red"
                 value="1"
@@ -65,15 +65,15 @@
     <v-row>
         <v-col cols="12">
             <v-textarea label="Мероприятие" rows="2"
-                        v-model="item.text"></v-textarea>
+                        v-model="item.UF_TEXT"></v-textarea>
         </v-col>
     </v-row>
     <v-row>
         <v-col cols="12">
-            <v-autocomplete dense
+            <v-combobox dense
                             full-width
                             no-data-text="нет данных"
-                            v-model="item.PLACE"
+                            v-model="item.UF_PLACE"
                             hide-no-data
                             item-value="ID"
                             clearable
@@ -81,7 +81,7 @@
                             hide-details
                             label="Место проведения"
                             :items="places">
-            </v-autocomplete>
+            </v-combobox>
         </v-col>
     </v-row>
     <v-row>
@@ -90,6 +90,13 @@
                             full-width
                             label="Руководитель"
                             no-data-text="нет данных"
+                            v-model="item.UF_PLACE"
+                            hide-no-data
+                            item-value="ID"
+                            item-text="UF_EMPNAME"
+                            clearable
+                            required
+                            hide-details
                             :items="employees">
             </v-autocomplete>
             <v-row>
@@ -104,7 +111,7 @@
     </v-row>
     <v-row>
         <v-col cols="6">
-            <v-autocomplete v-model="item.status"
+            <v-autocomplete v-model="item.UF_STATUS"
                             dense
                             full-width
                             label="Статус мероприятия"
@@ -119,18 +126,16 @@
             </v-autocomplete>
         </v-col>
         <v-col cols="6">
-            <v-autocomplete dense
-                            full-width
-                            label="Отметка о проведении"
-                            no-data-text="нет данных"
-                            :items="places">
-            </v-autocomplete>
+            <v-text-field full-width
+                          v-model="item.UF_COMMENTS"
+                          label="Отметка о проведении">
+            </v-text-field>
         </v-col>
     </v-row>
     <v-row>
         <v-col cols="12">
             <v-checkbox
-                v-model="item.wwwAttr"
+                v-model="item.UF_WWWATTR"
                 label="Публиковать в www"
                 color="green accent-4"
                 value="1"
@@ -153,6 +158,7 @@ export default {
             this.statuses = await this.$store.dispatch("data/list", "statuses");
             this.divisions = await this.$store.dispatch("data/list", "divisions");
             this.employees = await this.$store.dispatch("data/list", "employees");
+            this.places = await this.$store.dispatch("data/list", "places");
         } catch(e){
             console.log('ERR (action)', e);
         }
@@ -166,12 +172,18 @@ export default {
             places: null,
             item: {
                 ID: -1,
-                DVS: null,
-                regDt: null,
-                grAttr: 0,
-                dayAttr: 0,
-                specAttr: 0,
-                wwwAttr: 0
+                UF_RED: 0,
+                UF_ADT: null,
+                UF_DVS: null,
+                UF_GRATTR: 0,
+                UF_DAYATTR: 0,
+                UF_SPECATTR: 0,
+                UF_WWWATTR: 0,
+                UF_TEXT: null,
+                UF_PLACE: null,
+                UF_CHIEF: null,
+                UF_STATUS: null,
+                UF_COMMENTS: null
             }
         };
     },

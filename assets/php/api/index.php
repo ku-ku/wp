@@ -23,11 +23,7 @@ switch ($q){
         }
         break;
     case "acts":
-        if ($request->isPost()){
-            $data = acts_save();
-        } else {
-            $data = acts($request["id"]);
-        }
+        $data = acts();
         break;
     case "user":
         $data = user();
@@ -44,6 +40,10 @@ switch ($q){
     case "employees":
         $data = employees( isset($request["params"]) ? $request["params"] : false );
         break;
+    case "places":
+        $data = places();
+        break;
+    
     default:
         $valid = false;
 }   //switch ($q...
@@ -174,102 +174,6 @@ function red_save(){
     return $res;
 }   //red_save
 
-function acts($id){
-    $rootId = get_ib_id('workPlan');
-    if( $rootId > 0 ) {
-        $filter = Array('IBLOCK_ID' => $rootId, 'ACTIVE' => 'Y');
-        
-        if (isset($id)){
-            $filter["ID"] = $id;
-        }
-        $res = CIBlockElement::getList(
-                Array('ACTIVE_FROM' => 'ASC', 'NAME' => 'ASC'),
-                $filter,
-                false,
-                false,
-                Array("ID", "DETAIL_TEXT", "DATE_ACTIVE_FROM", "PROPERTY_PLNDVS", 
-                      "PROPERTY_GRATTR", "PROPERTY_DAYATTR", "PROPERTY_SPECATTR",
-                      "PROPERTY_PLNPLACE", "PROPERTY_PLNHDR", "PROPERTY_EMPS", 
-                      "PROPERTY_PLNSTATE", "PROPERTY_WWWATTR")
-        );
-        $arr = Array();
-        while($row = $res->GetNext()){
-            array_push($arr, Array(
-                "id"  => $row["ID"],
-                "name"=> $row["DETAIL_TEXT"],
-                "dt"  => (int)MakeTimeStamp($row["DATE_ACTIVE_FROM"]) * 1000,
-                "dvs" => $row["PROPERTY_PLNDVS_VALUE"],
-                "grAttr"  => $row["PROPERTY_GRATTR_VALUE"],
-                "dayAttr" => $row["PROPERTY_DAYATTR_VALUE"],
-                "specAttr"=> $row["PROPERTY_SPECATTR_VALUE"],
-                "place" => $row["PROPERTY_PLNPLACE_VALUE"],
-                "hdr"   => $row["PROPERTY_PLNHDR_VALUE"],
-                "emps"  => $row["PROPERTY_EMPS_VALUE"],
-                "state" => $row["PROPERTY_PLNSTATE_VALUE"],
-                "wwwAttr" => $row["PROPERTY_WWWATTR_VALUE"],
-                "red"   => 0
-            ));
-        }
-        return $arr;
-    }
-    return false;
-}   //acts
-
-function acts_save(){
-    global $request;
-    global $USER;
-    global $DB;
-    
-    //TODO: $rootId = get_ib_id('workPlan');
-    $rootId = 45;
-    
-    if( $rootId > 0 ){
-        
-        $id = isset($request["id"]) ? (int)$request["id"] : el_id_byex($rootId, $request["xid"]);
-        
-        $dt = date($DB->DateFormatToPHP(CSite::GetDateFormat("SHORT")), (int)$request["dt"]/1000);
-        $elVals = Array(
-            "MODIFIED_BY"     => $USER->GetID(),
-            "IBLOCK_SECTION_ID" => false,
-            "IBLOCK_ID"       =>  $rootId,
-            "ACTIVE"          =>  "Y",
-            "NAME"            =>  $request["nm"],
-            "DETAIL_TEXT"     =>  $request["nm"],
-            "CREATED_DATE"    => $dt,
-            "DATE_ACTIVE_FROM"=> $dt
-        );
-        if (isset($request["xid"])){
-            $elVals['EXTERNAL_ID'] = $request["xid"];
-        }
-        
-        $el = new CIBlockElement();
-        if ($id > 0){
-            $el->Update($id, $elVals);
-            $elId = $id;
-            $elId = $el->Add($elVals);
-        } else {
-        }
-        if ( $elId ){
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["dvs"], "PLNDVS");
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["grAttr"], "GRATTR");
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["dayAttr"], "DAYATTR");
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["specAttr"], "SPECATTR");
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["place"], "PLNPLACE");
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["hdr"], "PLNHDR");
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["emps"], "EMPS");
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["state"], "PLNSTATE");
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["wwwAttr"], "WWWATTR");
-            $res = Array("success" => 1, "id" => $elId);
-        } else {
-            $res = Array("success" => 0, "message" => $el->LAST_ERROR);
-        }
-    } else {
-        $res = Array("success" => 0, "message" => "No IB-workPlan found# ". $rootId);
-    }
-    
-    return $res;
-}   //act_save
-
 function hlbtByName($name){
     $args = array(
         'select' => array('ID'),
@@ -301,7 +205,7 @@ function divisions($params = false){
     $hlbtId = hlbtByName('department_codes');
     $res = array();
     if ($hlbtId < 1){
-        return array("success" => false, "error" => "No high-load table exists");
+        return array("success" => false, "error" => "No high-load table department_codes exists");
     }
     $hlblock = HLBT::getById($hlbtId)->fetch();
     $entity = HLBT::compileEntity($hlblock);
@@ -509,8 +413,20 @@ function employees($params = false){
             case "save":
                 $item = $params["item"];
                 
+                $order = array('sort' => 'asc');
+                $tmp = 'sort';
+                $params = array("ID", "LOGIN", "NAME", "SECOND_NAME", "LAST_NAME");
+                $filter = array("=ID" => $item["UF_UID"]);
+                $rsUser = CUser::GetList($order, $tmp, $filter, $params);
+                if ($user = $rsUser->Fetch()) {
+                    $empName = sprintf("%s %s %s", $user["LAST_NAME"], $user["NAME"], $user["SECOND_NAME"]);
+                } else {
+                    $empName = "Неизвестный";
+                }
+
                 $row  = array(
                     "UF_UID"  => $item["UF_UID"],
+                    "UF_EMPNAME"=>$empName,
                     "UF_DVS"  => $item["UF_DVS"],
                     "UF_STAFF"=> $item["UF_STAFF"],
                     "UF_ADDED"=> Bitrix\Main\Type\Date::createFromTimestamp(strtotime($item["UF_ADDED"])),
@@ -562,7 +478,7 @@ function employees($params = false){
             
             foreach ($dirs->users as $_u){
                 if ($el["UF_UID"] == $_u["ID"]){
-                    $el["USER_NAME"] = sprintf("%s %s %s", $_u["LAST_NAME"], $_u["NAME"], $_u["SECOND_NAME"]);
+                    $el["UF_EMPNAME"] = sprintf("%s %s %s", $_u["LAST_NAME"], $_u["NAME"], $_u["SECOND_NAME"]);
                     break;
                 }
             }
@@ -594,4 +510,84 @@ function employees($params = false){
     return $res;
 
 }   //employees
+
+function acts($params = false){
+    $hlbtId = hlbtByName('WpActions');
+    
+    if ($hlbtId < 1){
+        return false;
+    }
+    
+    $res = array();
+    $hlblock = HLBT::getById($hlbtId)->fetch();
+    $entity = HLBT::compileEntity($hlblock);
+    $entity_data_class = $entity->getDataClass();
+    if ( ($params !== false) && is_array($params["item"]) ){
+        switch($params["action"]){
+            case "save":
+                break;
+        }
+    } else {
+        $dirs = new stdClass();
+        $dirs->emps = array_slice(employees(false), 0);
+        $dirs->dvss = array_slice(divisions(false), 0);
+        
+        $args = array( 'select' => array('*') );
+        if (
+                (!!$params) && (intval($params["ID"])>0)
+           ){
+            $args['filter'] = array('=ID' => $params["ID"]);
+        } else {
+            $args['filter'] = array('=UF_RED' => 0);
+        }
+        
+        $rsData = $entity_data_class::getList($args);
+        while($el = $rsData->fetch()){
+            if (!!$el["UF_DVS"]){
+                foreach ($dirs->dvss as $_d){
+                    if ($el["UF_DVS"] == $_d["ID"]){
+                        $el["DVS_NAME"] = $_d["UF_NAME"];
+                        break;
+                    }
+                }
+            }
+            if (!!$el["UF_CHIEF"]){
+                foreach ($dirs->emps as $_e){
+                    if ($el["UF_CHIEF"] == $_e["ID"]){
+                        $el["CHIEF_NAME"] = $_e["UF_EMPNAME"];
+                        break;
+                    }
+                }
+            }
+            $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
+            $res[] = $el;            
+        }
+    }
+}   //acts
+
+function places(){
+    $hlbtId = hlbtByName('WpActions');
+    
+    if ($hlbtId < 1){
+        return false;
+    }
+    
+    $res = array();
+    $hlblock = HLBT::getById($hlbtId)->fetch();
+    $entity = HLBT::compileEntity($hlblock);
+    $entity_data_class = $entity->getDataClass();
+
+    $args = array( 
+                    'select' => array("UF_PLACE"),
+                    'filter' => array("=UF_RED" => 0, "!=UF_PLACE" => NULL)
+    );
+    $rsData = $entity_data_class::getList($args);
+    while($el = $rsData->fetch()){
+        if (array_search($el['UF_PLACE'], $res) === false){
+            $res[] = $el['UF_PLACE'];
+        }
+    }
+
+    return $res;
+}   //places
 ?>
