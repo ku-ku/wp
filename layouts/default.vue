@@ -3,8 +3,8 @@
     <v-main>
       <wp-bar v-if="has('user')" 
               v-on:navi="navi = !navi"
-              v-on:action="$refs['dlg'].open(DIA_MODES.action)"
-              v-on:redday="$refs['dlg'].open(DIA_MODES.reday)">
+              v-on:action="$refs['dlgAct'].open()"
+              v-on:redday="$refs['dlgRed'].open()">
       </wp-bar>
       <v-navigation-drawer v-model="navi" 
                            dark
@@ -39,7 +39,8 @@
       </v-navigation-drawer>  
         <Nuxt />
     </v-main>
-    <wp-dialog ref="dlg" :mode="DIA_MODES.action" />
+    <wp-dialog ref="dlgAct" :mode="DIA_MODES.action" />
+    <wp-dialog ref="dlgRed" :mode="DIA_MODES.reday" />
   </v-app>
 </template>
 

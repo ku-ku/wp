@@ -452,6 +452,20 @@ function install(){
                         "DEFAULT_VALUE" => "0"
                     )
                 ),
+                'UF_READY'=>Array(
+                    'ENTITY_ID' => $UFObject,
+                    'FIELD_NAME' => 'UF_READY',
+                    'USER_TYPE_ID' => 'boolean',
+                    'MANDATORY' => 'Y',
+                    "EDIT_FORM_LABEL" => Array('ru'=>'ГОТОВО', 'en'=>'Ready'), 
+                    "LIST_COLUMN_LABEL" => Array('ru'=>'ГОТОВО', 'en'=>'Ready'),
+                    "LIST_FILTER_LABEL" => Array('ru'=>'ГОТОВО', 'en'=>'Ready'), 
+                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
+                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>''),
+                    "SETTINGS" => array(
+                        "DEFAULT_VALUE" => "0"
+                    )
+                ),
                 'UF_TEXT'=>Array(
                     'ENTITY_ID' => $UFObject,
                     'FIELD_NAME' => 'UF_TEXT',
@@ -494,7 +508,7 @@ function install(){
                     'ENTITY_ID' => $UFObject,
                     'FIELD_NAME' => 'UF_STATUS',
                     'USER_TYPE_ID' => 'integer',
-                    'MANDATORY' => 'Y',
+                    'MANDATORY' => 'N',
                     "EDIT_FORM_LABEL" => Array('ru'=>'Статус', 'en'=>'Status'), 
                     "LIST_COLUMN_LABEL" => Array('ru'=>'Статус', 'en'=>'Status'),
                     "LIST_FILTER_LABEL" => Array('ru'=>'Статус', 'en'=>'Status'), 

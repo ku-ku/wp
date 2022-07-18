@@ -1,16 +1,17 @@
 import { empty } from "~/utils";
 const A_STATUSES = [
-    {ID: 0, name: 'Формирование'},
-    {ID: 1, name: 'Утверждено'},
-    {ID: 3, name: 'Проведено'},
+    {ID: 1, name: 'ПРОВЕДЕНО'},
+    {ID: 2, name: 'Перенесено'},
     {ID: 9, name: 'Отменено'}
 ];
 
 export const state = ()=>({
+    statuses: A_STATUSES,
     user: null,
     divisions: null,
     staffing: null,
-    statuses: A_STATUSES
+    acts: null,
+    reds: null
 });
 
 export const mutations = {
@@ -144,8 +145,8 @@ export const actions = {
                 }).then( data => {
                     if (!!data.success){
                         const o = {};
-                        o[k] = (data.items?.length > 0) 
-                                    ? data.items[0]
+                        o[k] = (data.item?.length > 0) 
+                                    ? data.item[0]
                                     : Object.assign({ID: data.ID}, item);
                         commit("upd", o);
                         resolve(o);

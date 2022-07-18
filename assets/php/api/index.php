@@ -12,44 +12,44 @@ use Bitrix\Highloadblock\HighloadBlockTable as HLBT;
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
 $q = $request["q"];
+$params = isset($request["params"]) ? $request["params"] : false;
 $data = false;
 $valid = true;
 switch ($q){
-    case "reds":
-        if ($request->isPost()){
-            $data = red_save();
-        } else {
-            $data = reds($request["id"]);
-        }
-        break;
     case "acts":
-        $data = acts();
+        $data = acts( $params );
         break;
-    case "user":
-        $data = user();
+    case "reds":
+        $data = reds( $params );
         break;
     case "divisions":
-        $data = divisions( isset($request["params"]) ? $request["params"] : false );
+        $data = divisions( $params );
         break;
     case "users":
-        $data = users( isset($request["params"]) ? $request["params"] : false );
+        $data = users( $params );
         break;
     case "staffing":
-        $data = staffing( isset($request["params"]) ? $request["params"] : false );
+        $data = staffing( $params );
         break;
     case "employees":
-        $data = employees( isset($request["params"]) ? $request["params"] : false );
+        $data = employees( $params );
         break;
     case "places":
         $data = places();
+        break;
+    case "user":
+        $data = user();
         break;
     
     default:
         $valid = false;
 }   //switch ($q...
 
-header('Content-Type: text/plain; charset=UTF-8');
-if ( ($valid)&&($data) ){
+header('Content-Type: text/json; charset=UTF-8');
+if ( 
+        ($valid)
+     && (is_object($data) || is_array($data)) 
+   ){
     $content = json_encode($data);
     $jsonerr = json_last_error();
     if ($jsonerr !== JSON_ERROR_NONE){
@@ -58,7 +58,6 @@ if ( ($valid)&&($data) ){
         $length = strlen($content);
         header('Content-Length: '.$length);
         echo $content;
-        flush();
     }
 } else {
     if ($valid){
@@ -68,111 +67,6 @@ if ( ($valid)&&($data) ){
     }
 }
 
-function get_ib_id($code){
-    $ib = CIBlock::GetList(
-            Array(), 
-            Array(
-                'ACTIVE' => 'Y', 
-                'CODE'   => $code
-            ), false);
-    
-    $row = $ib->GetNext();
-    
-    return is_array($row) ? (int)$row["ID"] : 0;
-}   //get_ib_id
-
-function el_id_byex($ibId, $exId){
-    $id = 0;
-    if (isset($exId)){
-        $res = CIBlockElement::getList(
-                    Array('ACTIVE_FROM' => 'ASC'),
-                    Array('IBLOCK_ID' => $ibId, 'EXTERNAL_ID' => $exId),
-                    false,
-                    false,
-                    Array("ID", "EXTERNAL_ID")
-        );
-        if ($row = $res->GetNext()){
-            $id = (int)$row["ID"];
-        }
-        
-    } 
-    return $id;
-}   //el_id_byex
-
-
-function reds($id){
-    $rootId = get_ib_id('holidays');
-    if($rootId > 0){
-        $filter = Array('IBLOCK_ID' => $rootId, 'ACTIVE' => 'Y');
-        if (isset($id)){
-            $filter["ID"] = $id;
-        }
-        $res = CIBlockElement::getList(
-                Array('ACTIVE_FROM' => 'ASC', 'NAME' => 'ASC'),
-                $filter,
-                false,
-                false,
-                Array("ID", "DETAIL_TEXT", "DATE_ACTIVE_FROM", "PROPERTY_REDYR")
-        );
-        $arr = Array();
-        while($row = $res->GetNext()){
-            array_push($arr, Array(
-                "id"  => $row["ID"],
-                "name"=> $row["DETAIL_TEXT"],
-                "dt"  => (int)MakeTimeStamp($row["DATE_ACTIVE_FROM"]) * 1000,
-                "yr"  => ($row["PROPERTY_REDYR_VALUE"]) ? $row["PROPERTY_REDYR_VALUE"] : 0,
-                "red" => 1
-            ));
-        }
-        return $arr;
-    }
-    return false;
-}   //reds...   
-
-function red_save(){
-    global $request;
-    global $USER;
-    global $DB;
-    
-    $rootId = get_ib_id('holidays');
-    if($rootId > 0){
-        
-        $id = isset($request["id"]) ? (int)$request["id"] : el_id_byex($rootId, $request["xid"]);
-        
-        $dt = date($DB->DateFormatToPHP(CSite::GetDateFormat("SHORT")), (int)$request["dt"]/1000);
-        $elVals = Array(
-            "MODIFIED_BY"     => $USER->GetID(),
-            "IBLOCK_SECTION_ID" => false,
-            "IBLOCK_ID"       =>  $rootId,
-            "ACTIVE"          =>  "Y",
-            "NAME"            =>  $request["nm"],
-            "DETAIL_TEXT"     =>  $request["nm"],
-            "CREATED_DATE"    => $dt,
-            "DATE_ACTIVE_FROM"=> $dt
-        );
-        if (isset($request["xid"])){
-            $elVals['EXTERNAL_ID'] = $request["xid"];
-        }
-        
-        $el = new CIBlockElement();
-        if ($id > 0){
-            $el->Update($id, $elVals);
-            $elId = $id;
-        } else {
-            $elId = $el->Add($elVals);
-        }
-        if ( $elId ){
-            CIBlockElement::SetPropertyValues($elId, $rootId, $request["yr"], "REDYR");
-            $res = Array("success" => 1, "id" => $elId);
-        } else {
-            $res = Array("success" => 0, "message" => $el->LAST_ERROR, "dt" => $dt);
-        }
-    } else {
-        $res = Array("success" => 0, "message" => "No IB-holidays found");
-    }
-    
-    return $res;
-}   //red_save
 
 function hlbtByName($name){
     $args = array(
@@ -412,7 +306,7 @@ function employees($params = false){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
-                
+                /* User full-name */
                 $order = array('sort' => 'asc');
                 $tmp = 'sort';
                 $params = array("ID", "LOGIN", "NAME", "SECOND_NAME", "LAST_NAME");
@@ -443,7 +337,7 @@ function employees($params = false){
                             );
                 
                 if ( $obResult->isSuccess() ){
-                    $res["items"] = employees(array("ID" => $obResult->getID()));
+                    $res["item"] = employees(array("ID" => $obResult->getID()));
                 }
                 break;
             case "del":
@@ -515,7 +409,10 @@ function acts($params = false){
     $hlbtId = hlbtByName('WpActions');
     
     if ($hlbtId < 1){
-        return false;
+        return array(
+                        "success" => false, 
+                        "error" => "No HLBT WpActions exists"
+               );
     }
     
     $res = array();
@@ -525,6 +422,48 @@ function acts($params = false){
     if ( ($params !== false) && is_array($params["item"]) ){
         switch($params["action"]){
             case "save":
+                $item = $params["item"];
+                
+                $row  = array(
+                    "UF_ADT"      => Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($item["UF_ADT"])),
+                    "UF_RED"      => 0,
+                    "UF_DVS"      => $item["UF_DVS"],
+                    "UF_GRATTR"   => (!!$item["UF_GRATTR"]) ? 1 : 0,
+                    "UF_DAYATTR"  => (!!$item["UF_DAYATTR"]) ? 1 : 0,
+                    "UF_YEARATTR" => (!!$item["UF_YEARATTR"]) ? 1 : 0,
+                    "UF_SPECATTR" => (!!$item["UF_SPECATTR"]) ? 1 : 0,
+                    "UF_WWWATTR"  => (!!$item["UF_WWWATTR"]) ? 1 : 0,
+                    "UF_READY"    => (!!$item["UF_READY"]) ? 1 : 0,
+                    "UF_TEXT"     => $item["UF_TEXT"],
+                    "UF_PLACE"    => $item["UF_PLACE"],
+                    "UF_CHIEF"    => $item["UF_CHIEF"],
+                    "UF_STATUS"   => $item["UF_STATUS"],
+                    "UF_COMMENTS" => $item["UF_COMMENTS"]
+                );
+                
+                $obResult = ( intval($item['ID']) > 0 ) 
+                                ? $entity_data_class::update($item['ID'], $row) 
+                                : $entity_data_class::add($row);
+                $res = array(
+                                "success" => $obResult->isSuccess(), 
+                                "ID"=> $obResult->getID(),
+                                "error" => $obResult->isSuccess() ? null : $obResult->getErrorMessages(),
+                                "item" => $obResult->isSuccess() ? acts(array("ID" => $obResult->getID())) : null
+                            );
+                
+                break;
+            case "del":
+                $id = intval($params['ID']);
+                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
+                if (!!$res){
+                    if ( $res->isSuccess() ){
+                        $res = array("id" => $id, "success"=> true);
+                    } else {
+                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
+                    }
+                } else {
+                    $res = array("success" => false, "error"=>"Unknown item #");
+                }
                 break;
         }
     } else {
@@ -563,7 +502,95 @@ function acts($params = false){
             $res[] = $el;            
         }
     }
+    
+    return $res;
 }   //acts
+
+/**
+ * Red days oop's
+ * @param Array $params
+ * @return Array
+ */
+function reds($params = false){
+    $hlbtId = hlbtByName('WpActions');
+    
+    if ($hlbtId < 1){
+        return array(
+                        "success" => false, 
+                        "error" => "No HLBT WpActions exists"
+               );
+    }
+    
+    $res = array();
+    $hlblock = HLBT::getById($hlbtId)->fetch();
+    $entity = HLBT::compileEntity($hlblock);
+    $entity_data_class = $entity->getDataClass();
+    if ( ($params !== false) && is_array($params["item"]) ){
+        switch($params["action"]){
+            case "save":
+                $item = $params["item"];
+                
+                $row  = array(
+                    "UF_ADT"      => Bitrix\Main\Type\Date::createFromTimestamp(strtotime($item["UF_ADT"])),
+                    "UF_RED"      => 1,
+                    "UF_DVS"      => null,
+                    "UF_GRATTR"   => 0,
+                    "UF_DAYATTR"  => 0,
+                    "UF_YEARATTR" => (!!$item["UF_YEARATTR"]) ? 1 : 0,
+                    "UF_SPECATTR" => 0,
+                    "UF_WWWATTR"  => 1,
+                    "UF_READY"    => 1,
+                    "UF_TEXT"     => $item["UF_TEXT"]
+                );
+                
+                $obResult = ( intval($item['ID']) > 0 ) 
+                                ? $entity_data_class::update($item['ID'], $row) 
+                                : $entity_data_class::add($row);
+                $res = array(
+                                "success" => $obResult->isSuccess(), 
+                                "ID"=> $obResult->getID(),
+                                "error" => $obResult->isSuccess() ? null : $obResult->getErrorMessages(),
+                                "item" => $obResult->isSuccess() ? reds(array("ID" => $obResult->getID())) : null
+                            );
+                
+                break;
+            case "del":
+                $id = intval($params['ID']);
+                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
+                if (!!$res){
+                    if ( $res->isSuccess() ){
+                        $res = array("id" => $id, "success"=> true);
+                    } else {
+                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
+                    }
+                } else {
+                    $res = array("success" => false, "error"=>"Unknown item #");
+                }
+                break;
+        }
+    } else {
+        $args = array( 'select' => array('*') );
+        if (
+                (!!$params) && (intval($params["ID"])>0)
+           ){
+            $args['filter'] = array('=ID' => $params["ID"]);
+        } else {
+            $args['filter'] = array('=UF_RED' => 1);
+        }
+        
+        try {
+            $rsData = $entity_data_class::getList($args);
+            while($el = $rsData->fetch()){
+                $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
+                $res[] = $el;            
+            }
+        } catch(Exception $e) {
+            $res = array("success" => false, "error" => $e->getMessage() );
+        }
+    }
+    
+    return $res;
+}   //reds...   
 
 function places(){
     $hlbtId = hlbtByName('WpActions');

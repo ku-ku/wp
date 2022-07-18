@@ -1,19 +1,20 @@
 <template>
     <v-dialog content-class="wp-dialog"
               v-model="show"
+              scrollable
               max-width="800">
-        <v-toolbar dark
-                   dense
-                   color="primary">
-            <v-icon small>{{has('add') ? 'mdi-plus':'mdi-file-document-edit'}}</v-icon>&nbsp;
-            {{has('add') ? 'Новая запись' : 'Редактирование'}}
-            <v-spacer />
-            <v-btn small text v-on:click="show = false">
-                <v-icon small>mdi-close</v-icon>
-            </v-btn>
-        </v-toolbar>
-        <v-card tile class="pt-5">
-            <v-card-text>
+        <v-card tile>
+            <v-toolbar dark
+                       dense
+                       color="primary">
+                <v-icon small>{{has('add') ? 'mdi-plus':'mdi-file-document-edit'}}</v-icon>&nbsp;
+                {{has('add') ? 'Новая запись' : 'Редактирование'}}
+                <v-spacer />
+                <v-btn small text v-on:click="show = false">
+                    <v-icon small>mdi-close</v-icon>
+                </v-btn>
+            </v-toolbar>
+            <v-card-text class="pt-5">
                 <component v-bind:is="component"
                            ref="form"
                            v-on:success="success">
