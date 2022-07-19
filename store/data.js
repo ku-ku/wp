@@ -10,6 +10,7 @@ export const state = ()=>({
     user: null,
     divisions: null,
     staffing: null,
+    employees: null,
     acts: null,
     reds: null
 });

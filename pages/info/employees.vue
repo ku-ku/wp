@@ -56,7 +56,7 @@ import moment from "moment";
 
 export default {
     name: 'WpEmployees',
-    comments: {
+    components: {
         WpDialog,
         WpSearchField
     },

@@ -8,7 +8,7 @@
         </v-btn>
         <v-btn outlined dark color="secondary lighten-3"
                style="min-width: 8rem"
-               v-on:click="value=''">
+               v-on:click="today">
             {{get('today')}}
             <div class="text-muted">сегодня</div>
         </v-btn>
@@ -38,7 +38,8 @@
                 color="primary"
                 :events="events()"
                 :type="type"
-                v-on:click:event="edit">
+                v-on:click:event="edit"
+                v-on:change="change">
         <template v-slot:event="{ event }">
             <v-tooltip bottom
                        max-width="720"
@@ -52,6 +53,32 @@
                 </template>    
                 <span v-html="event.title"></span>
             </v-tooltip>    
+        </template>
+        <template v-slot:interval="{date, time}">
+            <v-menu dark offset-y color="primary">
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn v-on="on"
+                           x-small 
+                           elevation="0"
+                           fab
+                           right
+                           absolute
+                           v-bind="attrs">
+                           <v-icon small>mdi-plus</v-icon>
+                    </v-btn>
+                </template>
+                <v-list dense>
+                    <v-list-item v-on:click="addAction(date+'T'+time)">
+                        <v-list-item-icon><v-icon small>mdi-bank-plus</v-icon></v-list-item-icon>
+                        <v-list-item-title>Добавить мероприятие...</v-list-item-title>
+                    </v-list-item>
+                    <v-divider />
+                    <v-list-item v-on:click="addRed(date)">
+                        <v-list-item-icon><v-icon small>mdi-calendar-plus</v-icon></v-list-item-icon>
+                        <v-list-item-title>Добавить праздничный день...</v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-menu>
         </template>
         <template v-slot:day="{ past, date }">
             <v-menu dark offset-y color="primary">
@@ -89,9 +116,11 @@
 import $moment from "moment";
 import { DIA_MODES } from "~/utils";
 
+
 export default {
     name: 'WpCalendar',
     async fetch(){
+        console.log('At period', this.period);
         try {
             var all = await this.$store.dispatch("data/list", "acts");
             this.all = all.concat(
@@ -104,21 +133,23 @@ export default {
         }
     },
     data(){
+        const _d = new Date();
+        const period = { start: $moment([_d.getFullYear(), _d.getMonth(), 1]) };
+        period.end = period.start.clone().add(1, 'months');
+        
         return {
             DIA_MODES,
             value: '',
             type: 'month',
             types: [{name: 'Месяц', id:'month'}, {name: 'Неделя', id:'week'}, {name:'День', id:'day'}],
-            all: null
+            all: null,
+            period
         };
     },
     mounted(){
         this.$fetch();
     },
     methods:{
-        log(e){
-            console.log(e);
-        },
         get(q, v){
             switch(q){
                 case 'today':
@@ -131,6 +162,16 @@ export default {
                     }
                     return s;
             }
+        },
+        today(){
+            this.type = 'day';
+            this.$nextTick(()=> this.value='');
+        },
+        change({start, end}){
+            this.period.start = $moment(start.date, 'YYYY-MM-DD');
+            this.period.end = $moment(end.date, 'YYYY-MM-DD').add(1, 'day');
+            //reset loading
+            this.$store.commit("data/set", {acts: null, reds: null});
         },
         events(){
             const _FMT = "YYYY-MM-DD HH:mm:ss";

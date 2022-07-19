@@ -529,6 +529,28 @@ function install(){
                     "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
                     "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
                 ),
+                'UF_AUTHOR'=>Array(
+                    'ENTITY_ID' => $UFObject,
+                    'FIELD_NAME' => 'UF_AUTHOR',
+                    'USER_TYPE_ID' => 'integer',
+                    'MANDATORY' => 'Y',
+                    "EDIT_FORM_LABEL" => Array('ru'=>'Автор записи', 'en'=>'Author'), 
+                    "LIST_COLUMN_LABEL" => Array('ru'=>'Автор записи', 'en'=>'Author'),
+                    "LIST_FILTER_LABEL" => Array('ru'=>'Автор записи', 'en'=>'Author'), 
+                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
+                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
+                ),
+                'UF_INSTIME'=>Array(
+                    'ENTITY_ID' => $UFObject,
+                    'FIELD_NAME' => 'UF_INSTIME',
+                    'USER_TYPE_ID' => 'datetime',
+                    'MANDATORY' => 'Y',
+                    "EDIT_FORM_LABEL" => Array('ru'=>'Время записи', 'en'=>'Ins time'), 
+                    "LIST_COLUMN_LABEL" => Array('ru'=>'Время записи', 'en'=>'Ins time'),
+                    "LIST_FILTER_LABEL" => Array('ru'=>'Время записи', 'en'=>'Ins time'), 
+                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
+                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
+                ),
             );  //fields
             $arSavedFields = array();
             foreach($arFields as $arField){

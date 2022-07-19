@@ -1,5 +1,5 @@
 <template>
-<v-form>
+<v-form class="wp-action">
     <v-row>
         <v-col cols="4">
             <wp-date-input label="Дата"
@@ -25,6 +25,12 @@
                         rows="2" 
                         :error="errs.UF_TEXT"
                         v-model="item.UF_TEXT"></v-textarea>
+        </v-col>
+    </v-row>
+    <v-row class="wp-action__meta" v-if="!has('add')">
+        <v-col cols="12">
+            <span><v-icon small>mdi-account</v-icon>{{item.UF_AUTHOR}}</span>
+            <span><v-icon small>mdi-clock</v-icon>{{_fmt_dt(item.UF_INSTIME)}}</span>
         </v-col>
     </v-row>
 </v-form>

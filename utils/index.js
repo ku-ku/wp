@@ -17,7 +17,8 @@ const DIA_MODES = {
     "dvs": 3,
     "user": 4,
     "staff": 5,
-    "emp": 6
+    "emp": 6,
+    "emplist": 7
 };
 
 /**
@@ -40,8 +41,6 @@ const lookup = async addr => {
                 timeout:5000
     });
 };   //lookup
-
-
 
 
 export {

@@ -1,5 +1,5 @@
 <template>
-<v-form>
+<v-form class="wp-action">
     <v-row>
         <v-col cols="4">
             <wp-date-input label="Дата, время проведения"
@@ -107,7 +107,12 @@
             </v-autocomplete>
             <v-row class="mt-5">
                 <v-col cols="6">
-                    <v-btn small block tile>Дополнительно...</v-btn>
+                    <v-btn small 
+                           block 
+                           tile
+                           v-on:click="adds('headers')">
+                        Дополнительно...
+                    </v-btn>
                 </v-col>
                 <v-col cols="6">
                     <v-btn small block tile>Ответственные за подготовку...</v-btn>
@@ -156,15 +161,28 @@
                         v-model="item.UF_COMMENTS"></v-textarea>
         </v-col>
     </v-row>
+    <v-row class="wp-action__meta" v-if="!has('add')">
+        <v-col cols="12">
+            <span><v-icon small>mdi-account</v-icon>{{item.UF_AUTHOR}}</span>
+            <span><v-icon small>mdi-clock</v-icon>{{_fmt_dt(item.UF_INSTIME)}}</span>
+        </v-col>
+    </v-row>
+    <WpDialog ref="dlg" 
+              :mode="DIA_MODES.emplist" 
+              v-on:change="onemps" />
 </v-form>
 </template>
 <script>
 import { mxForm } from '~/utils/mxForm.js';
 import { DIA_MODES, empty } from "~/utils/";
-
+import $moment from "moment";
+import WpDialog from "~/components/WpDialog.vue";
 
 export default {
     name: "WpFrmAction",
+    components: {
+        WpDialog
+    },
     mixins: [mxForm],
     async fetch(){
         try {
@@ -178,6 +196,7 @@ export default {
     },
     data(){
         return {
+            DIA_MODES,
             error: null,
             statuses: null,
             divisions: null,
@@ -205,6 +224,12 @@ export default {
         this.$fetch();
     },
     methods: {
+        adds(q){
+            this.$refs["dlg"].open({});
+        },
+        onemps(e){
+            
+        },
         set(q, val){
             switch(q){
                 default:
@@ -244,3 +269,18 @@ export default {
     }   //methods
 }
 </script>
+<style lang="scss">
+    form.wp-action{
+        & .wp-action__meta{
+            & .col{
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                font-size: 0.75rem;
+                color: var(--v-secondary-base);
+                & .v-icon{margin-right: 0.35rem;}
+                & > * {margin-right: 1rem;}
+            }
+        }
+    }        
+</style>

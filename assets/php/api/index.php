@@ -420,6 +420,7 @@ function acts($params = false){
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
     if ( ($params !== false) && is_array($params["item"]) ){
+        global $USER;
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -438,7 +439,9 @@ function acts($params = false){
                     "UF_PLACE"    => $item["UF_PLACE"],
                     "UF_CHIEF"    => $item["UF_CHIEF"],
                     "UF_STATUS"   => $item["UF_STATUS"],
-                    "UF_COMMENTS" => $item["UF_COMMENTS"]
+                    "UF_COMMENTS" => $item["UF_COMMENTS"],
+                    "UF_AUTHOR"   => 10, //$USER->GetID(),
+                    "UF_INSTIME"  => new Bitrix\Main\Type\DateTime()
                 );
                 
                 $obResult = ( intval($item['ID']) > 0 ) 
@@ -468,6 +471,7 @@ function acts($params = false){
         }
     } else {
         $dirs = new stdClass();
+        $dirs->users= array_slice(users(false), 0);
         $dirs->emps = array_slice(employees(false), 0);
         $dirs->dvss = array_slice(divisions(false), 0);
         
@@ -481,7 +485,7 @@ function acts($params = false){
         }
         
         $rsData = $entity_data_class::getList($args);
-        while($el = $rsData->fetch()){
+        while( $el = $rsData->fetch() ){
             if (!!$el["UF_DVS"]){
                 foreach ($dirs->dvss as $_d){
                     if ($el["UF_DVS"] == $_d["ID"]){
@@ -498,8 +502,17 @@ function acts($params = false){
                     }
                 }
             }
+            if (!!$el["UF_AUTHOR"]){
+                foreach ($dirs->users as $_u){
+                    if ($el["UF_AUTHOR"] == $_u["ID"]){
+                        $el["UF_AUTHOR"] = $_u["LOGIN"];
+                        break;
+                    }
+                }
+            }
             $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
-            $res[] = $el;            
+            $el["UF_INSTIME"] = (!!$el["UF_INSTIME"]) ? $el["UF_INSTIME"]->getTimestamp()*1000 : null;
+            $res[] = $el;
         }
     }
     
@@ -528,6 +541,7 @@ function reds($params = false){
     if ( ($params !== false) && is_array($params["item"]) ){
         switch($params["action"]){
             case "save":
+                global $USER;
                 $item = $params["item"];
                 
                 $row  = array(
@@ -540,7 +554,9 @@ function reds($params = false){
                     "UF_SPECATTR" => 0,
                     "UF_WWWATTR"  => 1,
                     "UF_READY"    => 1,
-                    "UF_TEXT"     => $item["UF_TEXT"]
+                    "UF_TEXT"     => $item["UF_TEXT"],
+                    "UF_AUTHOR"   => 10, //$USER->GetID(),
+                    "UF_INSTIME"  => new Bitrix\Main\Type\DateTime()
                 );
                 
                 $obResult = ( intval($item['ID']) > 0 ) 
@@ -570,6 +586,7 @@ function reds($params = false){
         }
     } else {
         $args = array( 'select' => array('*') );
+        $users= array_slice(users(false), 0);
         if (
                 (!!$params) && (intval($params["ID"])>0)
            ){
@@ -582,6 +599,15 @@ function reds($params = false){
             $rsData = $entity_data_class::getList($args);
             while($el = $rsData->fetch()){
                 $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
+                $el["UF_INSTIME"] = (!!$el["UF_INSTIME"]) ? $el["UF_INSTIME"]->getTimestamp()*1000 : null;
+                if (!!$el["UF_AUTHOR"]){
+                    foreach ($users as $_u){
+                        if ($el["UF_AUTHOR"] == $_u["ID"]){
+                            $el["UF_AUTHOR"] = $_u["LOGIN"];
+                            break;
+                        }
+                    }
+                }
                 $res[] = $el;            
             }
         } catch(Exception $e) {
