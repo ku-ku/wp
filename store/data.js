@@ -186,3 +186,10 @@ export const actions = {
     }   //rm
 
 };      //actions
+
+export const getters = {
+    all: (state)=>{
+        var a = state.acts || [];
+        return a.concat(state.reds);
+    }
+};

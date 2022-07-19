@@ -45,7 +45,10 @@
                        content-class="event-details"
                        :color="event.color">
                 <template v-slot:activator="{ on, attrs }">
-                    <div v-html="event.title" v-on="on"></div>
+                    <div v-html="event.title" 
+                         v-on="on"
+                         v-bind:class="{'red-day': event.red}">
+                    </div>
                 </template>    
                 <span v-html="event.title"></span>
             </v-tooltip>    
@@ -53,9 +56,10 @@
         <template v-slot:day="{ past, date }">
             <v-menu dark offset-y color="primary">
                 <template v-slot:activator="{ on, attrs }">
-                    <v-btn icon small v-on="on"
+                    <v-btn v-on="on"
+                           x-small 
+                           elevation="0"
                            fab
-                           small
                            absolute
                            v-bind="attrs">
                            <v-icon small>mdi-plus</v-icon>
@@ -140,7 +144,7 @@ export default {
                         id: a.ID,
                         name: a.UF_TEXT,
                         start: $moment(a.UF_ADT).format(_FMT),
-                        color: (1==a.UF_RED) ? "red darken-4" : _color(),
+                        color: (1==a.UF_RED) ? "" : _color(),
                         timed: !!a.UF_DAYATTR,
                         red: 1==a.UF_RED
                     };
@@ -183,6 +187,12 @@ export default {
                 font-size: 0.55rem;
             }
         }
+    }
+}
+.v-event {
+    & .red-day{
+        background: #fff;
+        color: #D50000;
     }
 }
 .v-event-timed{

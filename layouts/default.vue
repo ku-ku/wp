@@ -9,7 +9,7 @@
       <v-navigation-drawer v-model="navi" 
                            dark
                            color="primary"
-                           absolute temporary>
+                           temporary>
         <v-list dense>
           <v-list-item to="/">
             <v-list-item-icon><v-icon>mdi-calendar-month</v-icon></v-list-item-icon>
@@ -37,7 +37,9 @@
           </v-list-item>
         </v-list>
       </v-navigation-drawer>  
+      <v-container fluid>
         <Nuxt />
+      </v-container>      
     </v-main>
     <wp-dialog ref="dlgAct" :mode="DIA_MODES.action" />
     <wp-dialog ref="dlgRed" :mode="DIA_MODES.reday" />
@@ -77,3 +79,9 @@ export default {
   }
 }
 </script>
+<style lang="scss">
+.v-navigation-drawer{
+  position: fixed;
+  top: 64px !important;
+}
+</style>
