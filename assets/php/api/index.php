@@ -424,7 +424,8 @@ function acts($params = false){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
-                
+                $meta = (!!$item["UF_META"]) ? json_encode($item["UF_META"]) : null;
+
                 $row  = array(
                     "UF_ADT"      => Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($item["UF_ADT"])),
                     "UF_RED"      => 0,
@@ -441,6 +442,7 @@ function acts($params = false){
                     "UF_STATUS"   => $item["UF_STATUS"],
                     "UF_COMMENTS" => $item["UF_COMMENTS"],
                     "UF_AUTHOR"   => 10, //$USER->GetID(),
+                    "UF_META"     => $meta,
                     "UF_INSTIME"  => new Bitrix\Main\Type\DateTime()
                 );
                 
@@ -512,6 +514,9 @@ function acts($params = false){
             }
             $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
             $el["UF_INSTIME"] = (!!$el["UF_INSTIME"]) ? $el["UF_INSTIME"]->getTimestamp()*1000 : null;
+            if (!!$el["UF_META"]){
+                $el["UF_META"] = json_decode($el["UF_META"]);
+            }
             $res[] = $el;
         }
     }

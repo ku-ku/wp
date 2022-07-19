@@ -111,11 +111,24 @@
                            block 
                            tile
                            v-on:click="adds('headers')">
-                        Дополнительно...
+                        <v-badge :content="get('headers')"
+                                 v-bind:class="{'no-val': !get('headers')}"
+                                 color="secondary lighten-4">
+                            Дополнительно...
+                        </v-badge>
                     </v-btn>
                 </v-col>
                 <v-col cols="6">
-                    <v-btn small block tile>Ответственные за подготовку...</v-btn>
+                    <v-btn small 
+                           block 
+                           tile
+                           v-on:click="adds('responsibles')">
+                        <v-badge :content="get('responsibles')"
+                                 v-bind:class="{'no-val': !get('responsibles')}"
+                                 color="secondary lighten-4">
+                           Ответственные за подготовку...
+                        </v-badge>
+                    </v-btn>
                 </v-col>
             </v-row>
         </v-col>
@@ -167,23 +180,22 @@
             <span><v-icon small>mdi-clock</v-icon>{{_fmt_dt(item.UF_INSTIME)}}</span>
         </v-col>
     </v-row>
-    <WpDialog ref="dlg" 
-              :mode="DIA_MODES.emplist" 
-              v-on:change="onemps" />
+    <wp-dialog ref="dlg"
+               :mode="DIA_MODES.emplist" 
+               v-on:change="onadds" />
 </v-form>
 </template>
 <script>
+import $moment from "moment";
 import { mxForm } from '~/utils/mxForm.js';
 import { DIA_MODES, empty } from "~/utils/";
-import $moment from "moment";
-import WpDialog from "~/components/WpDialog.vue";
 
 export default {
     name: "WpFrmAction",
+    mixins: [ mxForm ],
     components: {
-        WpDialog
+        WpDialog: () => import("~/components/WpDialog.vue")
     },
-    mixins: [mxForm],
     async fetch(){
         try {
             this.statuses = await this.$store.dispatch("data/list", "statuses");
@@ -202,6 +214,7 @@ export default {
             divisions: null,
             employees: null,
             places: null,
+            meta_key: 'headers',        //UF_META key: headers | responsibles: see adds()
             item: {
                 ID: -1,
                 UF_RED: 0,
@@ -215,7 +228,8 @@ export default {
                 UF_PLACE: null,
                 UF_CHIEF: null,
                 UF_STATUS: null,
-                UF_COMMENTS: null
+                UF_COMMENTS: null,
+                UF_META: null           //Object: {headers[IDs]?, responsibles[IDs]?}
             },
             errs: {}
         };
@@ -225,10 +239,27 @@ export default {
     },
     methods: {
         adds(q){
-            this.$refs["dlg"].open({});
+            this.meta_key = q;
+            //check meta structure
+            if ( !(!!this.item.UF_META) ){
+                this.item.UF_META = {};
+            }
+            if ( !(!!this.item.UF_META.headers) ){
+                this.item.UF_META.headers = [];
+            }
+            if ( !(!!this.item.UF_META.responsibles) ){
+                this.item.UF_META.responsibles = [];
+            }
+            //get choose dlg
+            const arr = this.item.UF_META[q];
+            this.$refs["dlg"].open(arr);
         },
-        onemps(e){
-            
+        onadds(e){
+            if ( !(!!this.item.UF_META) ){
+                this.item.UF_META = {};
+            }
+            this.item.UF_META[this.meta_key] = e;  //TODO: do not mutate vuex store state outside mutation handlers
+            this.$forceUpdate();
         },
         set(q, val){
             switch(q){
@@ -236,6 +267,16 @@ export default {
                     this.item[q] = val;
                     break;
             }
+        },
+        get(q){
+            switch(q){
+                case "headers":
+                case "responsibles":
+                    return (this.item.UF_META?.hasOwnProperty(q)) 
+                                ? this.item.UF_META[q]?.length
+                                : null;
+            }
+            return false;
         },
         filterByName(item, s){
             if ( empty(s) || (s.length < 2) ){
@@ -280,6 +321,13 @@ export default {
                 color: var(--v-secondary-base);
                 & .v-icon{margin-right: 0.35rem;}
                 & > * {margin-right: 1rem;}
+            }
+        }
+        & .v-badge{
+            &.no-val{
+                & .v-badge__badge{
+                    display: none;
+                }
             }
         }
     }        

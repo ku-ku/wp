@@ -23,6 +23,9 @@ export const mxForm = {
                            );
             }
         },
+        set(q, v){
+            this[q] = v;
+        },
         use(item){
             this.item = {...item};
             this.$nextTick(()=>{

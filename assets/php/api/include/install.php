@@ -551,6 +551,17 @@ function install(){
                     "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
                     "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
                 ),
+                'UF_META'=>Array(
+                    'ENTITY_ID' => $UFObject,
+                    'FIELD_NAME' => 'UF_META',
+                    'USER_TYPE_ID' => 'string',
+                    'MANDATORY' => 'N',
+                    "EDIT_FORM_LABEL" => Array('ru'=>'Дополнительно', 'en'=>'Meta'), 
+                    "LIST_COLUMN_LABEL" => Array('ru'=>'Дополнительно', 'en'=>'Meta'),
+                    "LIST_FILTER_LABEL" => Array('ru'=>'Дополнительно', 'en'=>'Meta'), 
+                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
+                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
+                ),
             );  //fields
             $arSavedFields = array();
             foreach($arFields as $arField){

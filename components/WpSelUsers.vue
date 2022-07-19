@@ -4,13 +4,12 @@
         <v-list-item-group v-if="has('employees')" 
                            v-model="selected"
                            color="primary"
-                           multiple
-                           v-on:change="sel">
+                           multiple>
             <v-list-item v-for="emp in employees"
                         :key="'emp-' + emp.ID"
                         :value="emp.ID">
                 <v-list-item-icon>
-                    <v-icon></v-icon>
+                    <v-icon v-if="has('checked', emp)" small>mdi-checkbox-outline</v-icon>
                 </v-list-item-icon>
                 <v-list-item-content class="flex-column align-start">
                     {{emp.UF_EMPNAME}}
@@ -28,41 +27,67 @@
 </template>
 <script>
 import { mxForm } from '~/utils/mxForm.js';
+import { empty } from '~/utils/';
 
 export default {
-    name: 'WpActUsers',
+    name: 'WpSelUsers',
     mixins: [ mxForm ],
+    inject: ['needs'],
     data(){
         return {
-            selected: []
+            selected: [],
+            search: null
         };
     },
     created(){
         this.$store.dispatch("data/list", "employees");
+        this.needs('title', 'Сотрудники');
+        this.needs('searchable', true);
     },
     computed: {
         employees(){
-            return this.$store.state.data.employees;
+            if (empty(this.search)){
+                return this.$store.state.data.employees;
+            } else {
+                const re = new RegExp('(' + this.search + ')+', 'gi');
+                return this.$store.state.data.employees?.filter( e => re.test(e.UF_EMPNAME));
+            }
         }
     },
     methods: {
-        has(q){
+        has(q, v){
             switch(q){
+                case "checked":
+                    return this.selected.findIndex( s => s===v.ID) > -1;
                 case "employees":
-                    return this.employees?.length > 0;
+                    return Array.isArray(this.employees);
             }
+            return false;
         },
-        sel(a){
-            console.log('sel', a);
+        use(items){
+            this.selected = Array.isArray(items) ? items : [];
+        },
+        validate(){
+            return true;
+        },
+        save(){
+            this.$emit("success", this.selected);
         }
     }
 }    
 </script>
 <style lang="scss">
-    .act-employees{
-        & .emp-meta{
-            font-size: 0.75rem;
-            color: var(--v-secondary-base);
+.act-employees{
+    & .v-list {
+        &-item{
+            &__icon{
+                align-self: center;
+            }
+            & .emp-meta{
+                font-size: 0.75rem;
+                color: var(--v-secondary-base);
+            }
         }
     }
+}
 </style>    

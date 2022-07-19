@@ -8,7 +8,10 @@
                        dense
                        color="primary">
                 <v-icon small>{{has('add') ? 'mdi-plus':'mdi-file-document-edit'}}</v-icon>&nbsp;
-                {{has('add') ? 'Новая запись' : 'Редактирование'}}
+                {{ title() }}
+                <wp-search-field v-if="needs.searchable" 
+                                 class="ml-3"
+                                 v-on:filter="onsearch" />
                 <v-spacer />
                 <v-btn small text v-on:click="show = false">
                     <v-icon small>mdi-close</v-icon>
@@ -35,14 +38,15 @@
     </v-dialog>
 </template>
 <script>
-import { DIA_MODES } from "~/utils/";
+import { DIA_MODES, empty } from "~/utils/";
 import WpFrmAction from "~/components/WpFrmAction.vue";
 import WpFrmRed from "~/components/WpFrmRed.vue";
 import WpFrmDivision from "~/components/WpFrmDivision.vue";
 import WpFrmUser from "~/components/WpFrmUser.vue";
 import WpFrmStaff from "~/components/WpFrmStaff.vue";
 import WpFrmEmployee from "~/components/WpFrmEmployee.vue";
-import WpActUsers from "~/components/WpActUsers.vue";
+import WpSelUsers from "~/components/WpSelUsers.vue";
+import WpSearchField from "~/components/WpSearchField.vue";
 
 const DIA_FORMS = {};
 DIA_FORMS[DIA_MODES.action] = WpFrmAction;
@@ -51,7 +55,7 @@ DIA_FORMS[DIA_MODES.dvs]    = WpFrmDivision;
 DIA_FORMS[DIA_MODES.user]   = WpFrmUser;
 DIA_FORMS[DIA_MODES.staff]  = WpFrmStaff;
 DIA_FORMS[DIA_MODES.emp]    = WpFrmEmployee;
-DIA_FORMS[DIA_MODES.emplist]= WpActUsers;
+DIA_FORMS[DIA_MODES.emplist]= WpSelUsers;
 
 export default {
     name: 'WpDialog',
@@ -61,7 +65,9 @@ export default {
         WpFrmDivision,
         WpFrmUser,
         WpFrmStaff,
-        WpFrmEmployee
+        WpFrmEmployee,
+        WpSelUsers,
+        WpSearchField
     },
     props: {
         mode: {
@@ -74,7 +80,11 @@ export default {
         return {
             DIA_MODES,
             show: false,
-            id: -1
+            fAdd: false,
+            needs: {
+                searchable: false,
+                title: undefined
+            }
         }
     },
     computed: {
@@ -86,11 +96,30 @@ export default {
             return this.$refs["form"]?.loading;
         }
     },
+    provide(){
+        const self = this;
+        const needs = (need, val)=>{
+            self.needs[need] = val;
+        };
+
+        return {
+            needs
+        };
+    },
     methods: {
+        title(){
+            if (empty(this.needs.title)){
+                return (this.fAdd) ? 'Новая запись' : 'Редактирование'
+            } else {
+                return this.needs.title;
+            }
+        },
         has(q){
             switch(q){
                 case "add":
-                    return this.$refs["form"]?.has("add");
+                    return this.fAdd;
+                case "searchable":
+                    return !!this.needs.searchable;
             }
             return false;
         },  //has
@@ -101,7 +130,9 @@ export default {
         open(item){
             this.show = (new Date()).getTime();
             this.$nextTick(()=>{
-                this.$refs["form"].use(item);
+                const f = this.$refs["form"];
+                f.use(item);
+                this.fAdd = f.has('add');
             });
         },
         save(){
@@ -113,6 +144,9 @@ export default {
         success(item){
             this.$emit('change', item);
             this.show = false;
+        },
+        onsearch(s){
+            this.$refs["form"].set('search', s);
         }
     }
 }
