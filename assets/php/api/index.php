@@ -105,7 +105,7 @@ function divisions($params = false){
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
 
-    if ( $params !== false ){
+    if ( ($params !== false) && is_array($params["item"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -158,7 +158,7 @@ function users($params = false){
     $group = CGroup::GetList($f, $sort, $filter)->fetch();
     $planningGroupId = (!!$group) ? $group["ID"] : -1;
     
-    if ( $params !== false ){
+    if ( ($params !== false) && is_array($params["item"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -242,7 +242,7 @@ function staffing($params = false){
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
     
-    if ( $params !== false ){
+    if ( ($params !== false) && is_array($params["item"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -484,6 +484,17 @@ function acts($params = false){
             $args['filter'] = array('=ID' => $params["ID"]);
         } else {
             $args['filter'] = array('=UF_RED' => 0);
+            $period = $params["period"];
+            if (!!period) {
+                $start = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["start"]) );
+                $end   = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["end"]) );
+                $args["filter"] = [
+                    "LOGIC" => "AND",
+                    ['=UF_RED' => 0],
+                    ['>=UF_ADT' => $start],
+                    ['<=UF_ADT' => $end]
+                ];
+            }
         }
         
         $rsData = $entity_data_class::getList($args);
@@ -598,6 +609,17 @@ function reds($params = false){
             $args['filter'] = array('=ID' => $params["ID"]);
         } else {
             $args['filter'] = array('=UF_RED' => 1);
+            $period = $params["period"];
+            if (!!period) {
+                $start = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["start"]) );
+                $end   = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["end"]) );
+                $args["filter"] = [
+                    "LOGIC" => "AND",
+                    ['=UF_RED' => 1],
+                    ['>=UF_ADT' => $start],
+                    ['<=UF_ADT' => $end]
+                ];
+            }
         }
         
         try {

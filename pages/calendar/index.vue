@@ -8,7 +8,7 @@
         </v-btn>
         <v-btn outlined dark color="secondary lighten-3"
                style="min-width: 8rem"
-               v-on:click="today">
+               v-on:click="gotoday">
             {{get('today')}}
             <div class="text-muted">сегодня</div>
         </v-btn>
@@ -107,55 +107,55 @@
         </template>
     </v-calendar>
     <wp-dialog ref="dlgAct" :mode="DIA_MODES.action" 
-               v-on:change="$fetch" />
+               v-on:change="_fetch" />
     <wp-dialog ref="dlgRed" :mode="DIA_MODES.reday" 
-               v-on:change="$fetch" />
+               v-on:change="_fetch" />
 </v-container>
 </template>
 <script>
+import { mapGetters } from 'vuex';
 import $moment from "moment";
 import { DIA_MODES } from "~/utils";
 
 
 export default {
     name: 'WpCalendar',
+    fetchOnServer: false,
     data(){
         const _d = new Date();
-        const period = { start: $moment([_d.getFullYear(), _d.getMonth(), 1]) };
-        period.end = period.start.clone().add(1, 'months');
-        
         return {
             DIA_MODES,
             value: '',
             type: 'month',
             types: [{name: 'Месяц', id:'month'}, {name: 'Неделя', id:'week'}, {name:'День', id:'day'}],
-            all: null,
-            period
+            all: null
         };
     },
-    async fetch(){
-        console.log('At period', this.period);
-        try {
-            const params = {
-                q: "acts",
-                start: this.period.start.toISOString(),
-                end:   this.period.end.toISOString()
-            };
-            var all = await this.$store.dispatch("data/list", params);
-            params.q = "reds";
-            this.all = all.concat(
-                            await this.$store.dispatch("data/list", "reds")
-                    );
-        } catch(e){
-            this.all = [];
-            console.log('ERR (calendar)', e);
-            $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
-        }
-    },
-    mounted(){
+    created(){
+/**
+        this.$store.commit("default");
         this.$fetch();
+*/        
+    },
+    computed: {
+        ...mapGetters([
+            'period'
+        ])
     },
     methods:{
+        async _fetch(){
+            console.log('fetch at period', this.period);
+            try {
+                var all = await this.$store.dispatch("data/list", "acts");
+                this.all = all.concat(
+                                await this.$store.dispatch("data/list", "reds")
+                        );
+            } catch(e){
+                this.all = [];
+                console.log('ERR (calendar)', e);
+                $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
+            }
+        },
         get(q, v){
             switch(q){
                 case 'today':
@@ -169,17 +169,19 @@ export default {
                     return s;
             }
         },
-        today(){
+        gotoday(){
             this.type = 'day';
             this.$nextTick(()=> this.value='');
         },
         change({start, end}){
-            this.period.start = $moment(start.date, 'YYYY-MM-DD');
-            this.period.end = $moment(end.date, 'YYYY-MM-DD').add(1, 'day');
-            //reset loading
+            console.log('change period', start, end);
+            this.$store.commit("set", { period: {
+                                            start: [start.year, start.month-1, start.day],
+                                            end: [end.year, end.month-1, end.day, 23, 59, 59]
+            }});
+            //reset for reload
             this.$store.commit("data/set", {acts: null, reds: null});
-            this.$fetch();
-            
+            this._fetch();
         },
         events(){
             const _FMT = "YYYY-MM-DD HH:mm:ss";

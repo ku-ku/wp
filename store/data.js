@@ -82,21 +82,20 @@ export const actions = {
             }
         });
     },   //user
-    async list({state, commit}, payload){
+    async list({state, commit, rootGetters}, payload){
         return new Promise((resolve, reject)=>{
-            var q, params = null;
-            if ( payload.hasOwnProperty("q") ){
-                q = payload.q;
-                params = payload;
+            const p = rootGetters["period"];
+            if (!!state[payload]){
+                resolve(state[payload]);
             } else {
-                q = payload;
-            }
-            if (!!state[q]){
-                resolve(state[q]);
-            } else {
-                $nuxt.api(q, params).then(res => {
+                $nuxt.api(payload, {
+                    period: {
+                        start: p.start.toISOString(),
+                        end: p.start.toISOString()
+                    }
+                }).then(res => {
                     const o = {};
-                    o[q] = res;
+                    o[payload] = res;
                     commit("set", o);
                     resolve(res);
                 }).catch(e => {

@@ -46,19 +46,28 @@ export default async function( ctx ){
             /**
              * Call back-end api
              * @param {String} q - that a query (required)
-             * @param {Object} params - add`s
+             * @param {Object?} params - add`s
              */
             async api(q, params){
                 const opts = {
                     url: env.apiUrl,
                     data: {
-                        q: q
+                        q: q,
                     },
                     dataType: "json"
                 };
                 if (typeof params !== "undefined"){
                     opts.data.params = params;
+                } else {
+                    opts.data.params = {};
                 }
+                // +period always
+                const p = $nuxt.$store.getters['period'];
+                opts.data.params.period = {
+                    start: p.start.toISOString(),
+                    end: p.end.toISOString()
+                };
+
                 return $.ajax(opts);
             },
             /**
