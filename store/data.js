@@ -84,12 +84,19 @@ export const actions = {
     },   //user
     async list({state, commit}, payload){
         return new Promise((resolve, reject)=>{
-            if (!!state[payload]){
-                resolve(state[payload]);
+            var q, params = null;
+            if ( payload.hasOwnProperty("q") ){
+                q = payload.q;
+                params = payload;
             } else {
-                $nuxt.api(payload).then(res => {
+                q = payload;
+            }
+            if (!!state[q]){
+                resolve(state[q]);
+            } else {
+                $nuxt.api(q, params).then(res => {
                     const o = {};
-                    o[payload] = res;
+                    o[q] = res;
                     commit("set", o);
                     resolve(res);
                 }).catch(e => {

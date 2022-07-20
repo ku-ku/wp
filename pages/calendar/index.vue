@@ -119,19 +119,6 @@ import { DIA_MODES } from "~/utils";
 
 export default {
     name: 'WpCalendar',
-    async fetch(){
-        console.log('At period', this.period);
-        try {
-            var all = await this.$store.dispatch("data/list", "acts");
-            this.all = all.concat(
-                            await this.$store.dispatch("data/list", "reds")
-                    );
-        } catch(e){
-            this.all = [];
-            console.log('ERR (calendar)', e);
-            $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
-        }
-    },
     data(){
         const _d = new Date();
         const period = { start: $moment([_d.getFullYear(), _d.getMonth(), 1]) };
@@ -145,6 +132,25 @@ export default {
             all: null,
             period
         };
+    },
+    async fetch(){
+        console.log('At period', this.period);
+        try {
+            const params = {
+                q: "acts",
+                start: this.period.start.toISOString(),
+                end:   this.period.end.toISOString()
+            };
+            var all = await this.$store.dispatch("data/list", params);
+            params.q = "reds";
+            this.all = all.concat(
+                            await this.$store.dispatch("data/list", "reds")
+                    );
+        } catch(e){
+            this.all = [];
+            console.log('ERR (calendar)', e);
+            $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
+        }
     },
     mounted(){
         this.$fetch();
@@ -172,6 +178,8 @@ export default {
             this.period.end = $moment(end.date, 'YYYY-MM-DD').add(1, 'day');
             //reset loading
             this.$store.commit("data/set", {acts: null, reds: null});
+            this.$fetch();
+            
         },
         events(){
             const _FMT = "YYYY-MM-DD HH:mm:ss";
