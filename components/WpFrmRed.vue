@@ -36,6 +36,7 @@
 </v-form>
 </template>
 <script>
+import $moment from "moment";
 import { mxForm } from '~/utils/mxForm.js';
 import { empty } from '~/utils/';
 
@@ -72,6 +73,7 @@ export default {
         },
         async save(){
             try {
+                this.item.UF_ADT = $moment(this.item.UF_ADT).toDate();
                 await this.$store.dispatch("data/upd", {reds: this.item});
                 this.$emit("success", this.item);
             } catch(e){

@@ -238,11 +238,15 @@ export default {
         this.$fetch();
     },
     methods: {
-        adds(q){
-            this.meta_key = q;
+        use(item){
+            this.item = {...item};
             //check meta structure
             if ( !(!!this.item.UF_META) ){
                 this.item.UF_META = {};
+            } else {
+                var meta = {...item.UF_META};
+                delete this.item.UF_META;
+                this.item.UF_META = meta;
             }
             if ( !(!!this.item.UF_META.headers) ){
                 this.item.UF_META.headers = [];
@@ -250,6 +254,9 @@ export default {
             if ( !(!!this.item.UF_META.responsibles) ){
                 this.item.UF_META.responsibles = [];
             }
+        },
+        adds(q){
+            this.meta_key = q;
             //get choose dlg
             const arr = this.item.UF_META[q];
             this.$refs["dlg"].open(arr);
@@ -262,6 +269,7 @@ export default {
             this.$forceUpdate();
         },
         set(q, val){
+            console.log(`change ${q}`, val);
             switch(q){
                 default:
                     this.item[q] = val;
@@ -298,7 +306,9 @@ export default {
             return (errs.n === 0);
         },
         async save(){
+            console.log('saving', this.item);
             try {
+                this.item.UF_ADT = $moment(this.item.UF_ADT).toDate();
                 await this.$store.dispatch("data/upd", {acts: this.item});
                 this.$emit("success", this.item);
             } catch(e){
