@@ -105,7 +105,7 @@ function divisions($params = false){
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
 
-    if ( ($params !== false) && is_array($params["item"]) ){
+    if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -158,7 +158,7 @@ function users($params = false){
     $group = CGroup::GetList($f, $sort, $filter)->fetch();
     $planningGroupId = (!!$group) ? $group["ID"] : -1;
     
-    if ( ($params !== false) && is_array($params["item"]) ){
+    if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -242,7 +242,7 @@ function staffing($params = false){
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
     
-    if ( ($params !== false) && is_array($params["item"]) ){
+    if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -302,7 +302,7 @@ function employees($params = false){
     $hlblock = HLBT::getById($hlbtId)->fetch();
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
-    if ( ($params !== false) && is_array($params["item"]) ){
+    if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
@@ -419,7 +419,7 @@ function acts($params = false){
     $hlblock = HLBT::getById($hlbtId)->fetch();
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
-    if ( ($params !== false) && is_array($params["item"]) ){
+    if ( ($params !== false) && (!!$params["action"]) ){
         global $USER;
         switch($params["action"]){
             case "save":
@@ -554,7 +554,7 @@ function reds($params = false){
     $hlblock = HLBT::getById($hlbtId)->fetch();
     $entity = HLBT::compileEntity($hlblock);
     $entity_data_class = $entity->getDataClass();
-    if ( ($params !== false) && is_array($params["item"]) ){
+    if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
                 global $USER;
