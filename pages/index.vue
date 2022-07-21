@@ -1,5 +1,5 @@
 <template>
-<v-container fluid>
+<v-container>
   <v-list class="wp">
     <v-list-item v-for="d in dates"
                  class="mt-5"
