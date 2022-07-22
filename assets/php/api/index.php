@@ -5,7 +5,8 @@
  */
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
-\Bitrix\Main\Loader::includeModule('iblock');
+require(__DIR__ . '/classes/chlbt.php');
+
 \Bitrix\Main\Loader::includeModule('highloadblock');
 use Bitrix\Highloadblock\HighloadBlockTable as HLBT;
 
@@ -231,7 +232,20 @@ function users($params = false){
  * @return boolean
  */
 function staffing($params = false){
-    
+
+/**
+    $entity = new CHLBTEntity('staffing');
+    if ( ($params !== false) && (!!$params["action"]) ){
+        switch($params["action"]){
+            case "save":
+                break;
+            case "del": 
+                break;
+        }
+    } else {
+        return $entity->list(array('*'), false, array('UF_SORT' => 'ASC', 'UF_NAME' => 'ASC'));
+    }
+ */    
     $hlbtId = hlbtByName('staffing');
     if ($hlbtId < 1){
         return false;
@@ -282,7 +296,6 @@ function staffing($params = false){
         }
     }
     return $res;
-    
 }   //staffing
 
 /**
@@ -646,26 +659,10 @@ function reds($params = false){
 }   //reds...   
 
 function places(){
-    $hlbtId = hlbtByName('WpActions');
-    
-    if ($hlbtId < 1){
-        return false;
-    }
-    
-    $res = array();
-    $hlblock = HLBT::getById($hlbtId)->fetch();
-    $entity = HLBT::compileEntity($hlblock);
-    $entity_data_class = $entity->getDataClass();
-
-    $args = array( 
-                    'select' => array("UF_PLACE"),
-                    'filter' => array("=UF_RED" => 0, "!=UF_PLACE" => NULL)
-    );
-    $rsData = $entity_data_class::getList($args);
-    while($el = $rsData->fetch()){
-        if (array_search($el['UF_PLACE'], $res) === false){
-            $res[] = $el['UF_PLACE'];
-        }
+    global $DB;
+    $rsData = $DB->Query("select distinct UF_PLACE from wpactions where UF_PLACE is not NULL order by 1");
+    while( $el = $rsData->fetch() ){
+        $res[] = $el['UF_PLACE'];
     }
 
     return $res;
