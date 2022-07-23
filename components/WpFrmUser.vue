@@ -1,5 +1,6 @@
 <template>
-<v-form v-on:submit.stop.prevent="save">
+<v-form v-on:submit.stop.prevent="save"
+        class="wp-user">
     <v-row>
         <v-col cols="4">
             <v-text-field v-model="item.LOGIN"
@@ -58,7 +59,7 @@
             </v-text-field>
         </v-col>
     </v-row>
-    <v-row>
+    <v-row align="end">
         <v-col cols="4">
             <v-checkbox
                 v-model="item.WP_PLANNING"
@@ -77,23 +78,54 @@
                 hide-details>
             </v-checkbox>
         </v-col>
+        <v-col cols="4">
+            <v-btn small outlined tile
+                   :disabled="!has('planing')"
+                   v-on:click="dvssOpen">
+                <v-badge :content="get('divisions')"
+                         v-bind:class="{'no-val': !get('divisions')}"
+                         color="secondary lighten-4">
+                    закрепить подразделения...
+                </v-badge>
+            </v-btn>
+        </v-col>
     </v-row>
+    <wp-dialog ref="dlg"
+               :mode="DIA_MODES.dvslist" 
+               v-on:change="ondvss" />
+    
 </v-form>
 </template>
 <script>
 import { mxForm } from '~/utils/mxForm.js';
-import { empty } from '~/utils/';
+import { DIA_MODES, empty } from "~/utils/";
 
 export default{
     name: 'WpFrmUser',
     mixins: [ mxForm ],
     data(){
         return {
+            DIA_MODES,
             item: {},
             errs: {}
         };
     },
+    components: {
+        WpDialog: () => import("~/components/WpDialog.vue")
+    },
     methods: {
+        has(q){
+            switch(q){
+                case "planing":
+                    return "Y" === this.item.WP_PLANNING;
+            }
+        },
+        get(q){
+            switch(q){
+                case "divisions":
+                    return this.item.DVSS?.length;
+            }
+        },
         validate(){
             const _RQS = ["LOGIN", "LAST_NAME", "NAME"],
                   errs = { n: 0 };
@@ -122,8 +154,27 @@ export default{
                 this.$emit("error", e);
             }
             return false;
-        }   //save
+        },   //save
+        dvssOpen(){
+            this.$refs["dlg"].open(this.item.DVSS);
+        },
+        ondvss(e){
+            console.log('dvss', e);
+            this.item.DVSS = e;
+            this.$forceUpdate();
+        }
     }
     
 }
 </script>
+<style lang="scss">
+    form.wp-user{
+        & .v-badge{
+            &.no-val{
+                & .v-badge__badge{
+                    display: none;
+                }
+            }
+        }
+    }
+</style>    

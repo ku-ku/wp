@@ -18,7 +18,8 @@ const DIA_MODES = {
     "user": 4,
     "staff": 5,
     "emp": 6,
-    "emplist": 7
+    "emplist": 7,
+    "dvslist": 8
 };
 
 /**

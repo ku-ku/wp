@@ -123,6 +123,14 @@ export default {
         change(item){
             console.log('change', item);
             this.$fetch();
+            
+            this.$nextTick(()=>{
+                const n = this.all.findIndex( e => e.ID === item.ID );
+                if ( n > -1 ){
+                    this.selected = [this.all[n]];
+                }
+            });
+            
         }
     }
 };

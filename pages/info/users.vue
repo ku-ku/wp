@@ -69,7 +69,6 @@ export default{
                 { text: 'А',      value: 'ACTIVE' },
                 { text: 'ПЛ.',    value: 'WP_PLANNING' },
                 { text: 'Посл.вход', value: 'LAST_LOGIN',  cellClass: "col-fixed"},
-                { text: 'Примечание', value: 'PERSONAL_NOTES',  cellClass: "col-fixed" },
                 { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
             ],
             selected: [],

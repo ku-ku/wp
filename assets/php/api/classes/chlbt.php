@@ -16,7 +16,7 @@ abstract class CHLBT {
         return $res;
     }   //hlbtByName
 
-    abstract function list($select = array('*'), $filter = false, $order = false);
+    abstract function list($args);
     abstract function save($item);
     abstract function del($id);
 }
@@ -47,23 +47,26 @@ class CHLBTEntity extends CHLBT {
 
     /**
      * Getting array of entityes
+     * @param Array $args getList arguments
      */
-    public function list($select = array('*'), $filter = false, $order = false){
+    public function list( $args ){
         $res = array();
         if ( !$this->assert( $res ) ){
             return $res;
         }
-    
-        $args = array('select' => $select);
-
-        if (!!$filter){
-            $args['filter'] = $filter;
+        
+        $params = array(
+            "select" => !!$args["select"] ? $args["select"] : array('*')
+        );
+        
+        if (!!$args['filter']){
+            $params['filter'] = $args['filter'];
         }
-        if (!!$order){
-            $args['order'] = $order;
+        if (!!$args['order']){
+            $params['order'] = $args['order'];
         }
 
-        $rsData = $this->entity_data_class::getList($args);
+        $rsData = $this->entity_data_class::getList($params);
         while( $el = $rsData->fetch() ){
             $res[] = $el;
         }
@@ -77,13 +80,14 @@ class CHLBTEntity extends CHLBT {
         }
         $id = intval($item['ID']);
         $obResult = ( $id > 0 ) 
-                        ? $this->entity_data_class::update($id, $item) 
-                        : $this->entity_data_class::add($id);
+                        ? $this->entity_data_class::update( $id, $item ) 
+                        : $this->entity_data_class::add( $item );
+        $id = $obResult->getID();
         $res = array(
                         "success" => $obResult->isSuccess(), 
-                        "ID"=> $obResult->getID(),
+                        "ID"=> $id,
                         "error" => $obResult->isSuccess() ? null : $obResult->getErrorMessages(),
-                        "item"  => $obResult->isSuccess() ? $this->list($filter = array("=ID" => $obResult->getID())) : null
+                        "item"  => $obResult->isSuccess() ? $this->list( array("filter" => array("=ID" => $id)) ) : null
                     );
         return $res;
     }   //save
@@ -105,7 +109,8 @@ class CHLBTEntity extends CHLBT {
         } else {
             $res = array("success" => false, "error"=>"Unknown item #");
         }
+        
+        return $res;
     }   //del
 }       //CHLBTEntity
-
 ?>

@@ -20,6 +20,16 @@
     </v-row>
     <v-row>
         <v-col cols="12">
+            <v-text-field v-model="item.UF_EMPNAME"
+                          label="ФИО"
+                          :error="errs.UF_EMPNAME"
+                          required
+                          hide-details>
+            </v-text-field>
+        </v-col>
+    </v-row>
+    <v-row>
+        <v-col cols="12">
             <v-autocomplete label="Подразделение" 
                         v-model="item.UF_DVS"
                         hide-no-data
@@ -76,7 +86,7 @@
                         :filter="filterByName"
                         :items="users()">
                 <template v-slot:selection="{ attr, on, item, selected }">
-                    {{item.LAST_NAME}} {{item.NAME}} {{item.SECOND_NAME}}
+                    {{item.LAST_NAME}} {{item.NAME}} {{item.SECOND_NAME}} ({{item.LOGIN}})
                 </template>
                 <template v-slot:item="{ item }">
                     <div>{{item.LAST_NAME}} {{item.NAME}} {{item.SECOND_NAME}}</div>
@@ -145,7 +155,7 @@ export default {
             return this.$store.state.data.divisions;
         },
         validate(){
-            const _RQS = ["UF_ADDED", "UF_DVS", "UF_STAFF", "UF_UID"],
+            const _RQS = ["UF_ADDED", "UF_EMPNAME", "UF_DVS", "UF_STAFF"],
                   errs = { n: 0 };
             _RQS.map( r => {
                 if ( empty(this.item[r]) ){

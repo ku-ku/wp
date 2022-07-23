@@ -80,6 +80,7 @@ export default {
                 { text: 'Должность', value: 'STAFF_NAME' },
                 { text: 'Дата приема', value: 'UF_ADDED' },
                 { text: 'Дата увольнения', value: 'UF_END' },
+                { text: 'Login', value: 'UF_LOGIN' },
                 { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
             ]
         };
@@ -94,7 +95,7 @@ export default {
             } else {
                 const re = new RegExp('(' + this.s + ')+', 'gi');
                 return this.all.filter( e => {
-                    return re.test(e.UF_NAME);
+                    return re.test(e.UF_EMPNAME);
                 });
             }
         }   //staffs
@@ -110,7 +111,6 @@ export default {
             return false;
         },
         edit(e){
-            console.log('editing', e);
             this.selected = [e];
             this.$refs["dlg"].open(e);
         },
@@ -119,9 +119,9 @@ export default {
                 return;
             }
             try {
-                await this.$store.dispatch("data/rm", {employees});
+                await this.$store.dispatch("data/rm", {employees: e});
                 this.$fetch();
-            }catch(e){
+            } catch(e){
                 console.log('ERR (del)', e);
                 $nuxt.msg({type:'warning', text: `ОШИБКА удаления: ${e?.message || 'неизвестная'}`});
             }
@@ -129,22 +129,15 @@ export default {
         /**
          * Event handle after savig
          */
-        change(item){
-            console.log('change', item);
+        async change(item){
             const id = item.ID;
-            (async()=>{
-                try {
-                    await this.$fetch();
-                    this.$nextTick(()=>{
-                        const n = this.all.findIndex( e => e.ID === id );
-                        if ( n > -1 ){
-                            this.selected = [this.all[n]];
-                        }
-                    });
-                } catch(e){
-                    console.log('ERR (change)', e);
+            await this.$fetch();
+            this.$nextTick(()=>{
+                const n = this.all.findIndex( e => e.ID === id );
+                if ( n > -1 ){
+                    this.selected = [this.all[n]];
                 }
-            })();
+            });
         }
     }
 };

@@ -7,8 +7,7 @@
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 require(__DIR__ . '/classes/chlbt.php');
 
-\Bitrix\Main\Loader::includeModule('highloadblock');
-use Bitrix\Highloadblock\HighloadBlockTable as HLBT;
+define("WP_GROUP", "WP_PLANNING");
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
@@ -68,81 +67,52 @@ if (
     }
 }
 
-
-function hlbtByName($name){
-    $args = array(
-        'select' => array('ID'),
-        'filter' => array('TABLE_NAME' => $name)
-    );
-    $res = -1;
-    $hlblock = HLBT::getList($args);
-    if ( $row = $hlblock->fetch() ){
-        $res = $row['ID'];
-    }
-    return $res;
-}   //listTables
-
-
 function user(){
+    if (!defined('PUBLIC_AJAX_MODE')) {
+        define('PUBLIC_AJAX_MODE', true);
+    }
     global $USER;
     if ( $USER->IsAuthorized() ){
+        //Check group 
+        $f = "ID";
+        $sort = "ASC";
+        $filter = array("STRING_ID" => WP_GROUP);
+        $group = CGroup::GetList($f, $sort, $filter)->fetch();
+        $planningGroupId = (!!$group) ? $group["ID"] : -1;
+        
         return array(
             "id"    => $USER->GetID(),
             "name"  => $USER->GetFullName(),
             "adm"   => $USER->IsAdmin(),
-            "groups"=> $USER->GetUserGroupArray()
+            "haswp" => $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray())
         );
+        
     }
     return array( "id" => -1 );
 }   //user
 
 function divisions($params = false){
-    $hlbtId = hlbtByName('department_codes');
     $res = array();
-    if ($hlbtId < 1){
-        return array("success" => false, "error" => "No high-load table department_codes exists");
-    }
-    $hlblock = HLBT::getById($hlbtId)->fetch();
-    $entity = HLBT::compileEntity($hlblock);
-    $entity_data_class = $entity->getDataClass();
-
+    $dvss = new CHLBTEntity('department_codes');
     if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
                 unset($item["isTrusted"]);
-                
-                $obResult = ( intval($item['ID']) > 0 ) 
-                                ? $entity_data_class::update($item['ID'], $item) 
-                                : $entity_data_class::add($item);
-                
-                $res = array("success" => $obResult->isSuccess(), "ID"=> $obResult->getID() );
+                $dvss->save($item);
                 break;
             case "del":
-                $id = intval($params['ID']);
-                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
-                if (!!$res){
-                    if ( $res->isSuccess() ){
-                        $res = array("id" => $id, "success"=> true);
-                    } else {
-                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
-                    }
-                } else {
-                    $res = array("success" => false, "error"=>"Unknown item #");
-                }
+                $dvss->del(intval($params['ID']));
                 break;
         }
     } else {
-        $rsData = $entity_data_class::getList(array(
-                    'select' => array('*'),
-                    'order' => array('UF_SORT' => 'ASC'),
-        ));
-        while($el = $rsData->fetch()){
-            $res[] = $el;
-        }
+        $args = array(
+            "order" => array('UF_SORT' => 'ASC')
+        );
+        $res = $dvss->list( $args );
     }
     return $res;
-}
+}   //divisions
 
 /**
  * Users oops
@@ -152,10 +122,9 @@ function users($params = false){
     $res = array(); //returning
     
     //Check group 
-    $groupId = "WP_PLANNING";
     $f = "ID";
     $sort = "ASC";
-    $filter = array("STRING_ID"=>$groupId);
+    $filter = array("STRING_ID" => WP_GROUP);
     $group = CGroup::GetList($f, $sort, $filter)->fetch();
     $planningGroupId = (!!$group) ? $group["ID"] : -1;
     
@@ -180,6 +149,11 @@ function users($params = false){
                     unset($item["PASSWORD"]);
                     unset($item["CONFIRM_PASSWORD"]);
                 }
+                
+                if (!!$item["DVSS"]){
+                    $item["WORK_NOTES"] = json_encode( array("divisions" => $item["DVSS"]) );
+                }
+                
                 $user = new CUser();
                 $res = false;
                 if (intval($item["ID"]) > 0){
@@ -214,13 +188,21 @@ function users($params = false){
     } else {
         $order = array('sort' => 'asc');
         $tmp = 'sort';
-        $params = array("ID", "ACTIVE", "LOGIN", "NAME", "SECOND_NAME", "LAST_NAME", "EMAIL", "PERSONAL_PHONE", "PERSONAL_NOTES", "IS_ONLINE");
+        $params = array("ID", "ACTIVE", "LOGIN", "NAME", "SECOND_NAME", "LAST_NAME", "EMAIL", "PERSONAL_PHONE", "PERSONAL_NOTES", "IS_ONLINE", "WORK_NOTES");
         $filter = array();
         $rsUsers = CUser::GetList($order, $tmp, $filter, $params);
         
         while( $el = $rsUsers->Fetch() ) {
-            $el["WP_PLANNING"] = in_array($planningGroupId, CUser::GetUserGroup($el["ID"])) ? "Y" : null;
-            $res[] = $el;
+            if ( strpos($el["LOGIN"], "esia_") === false ) {
+                $el["WP_PLANNING"] = in_array($planningGroupId, CUser::GetUserGroup($el["ID"])) ? "Y" : null;
+                if (!!$el["WORK_NOTES"]){
+                    $json = json_decode($el["WORK_NOTES"]);
+                    if ( JSON_ERROR_NONE == json_last_error() ){
+                        $el["DVSS"] = $json->divisions;
+                    }
+                }
+                $res[] = $el;
+            }
         };
     }
     return $res;
@@ -232,68 +214,26 @@ function users($params = false){
  * @return boolean
  */
 function staffing($params = false){
-
-/**
+    $res;
     $entity = new CHLBTEntity('staffing');
-    if ( ($params !== false) && (!!$params["action"]) ){
-        switch($params["action"]){
-            case "save":
-                break;
-            case "del": 
-                break;
-        }
-    } else {
-        return $entity->list(array('*'), false, array('UF_SORT' => 'ASC', 'UF_NAME' => 'ASC'));
-    }
- */    
-    $hlbtId = hlbtByName('staffing');
-    if ($hlbtId < 1){
-        return false;
-    }
-    
-    $res = array();
-    $hlblock = HLBT::getById($hlbtId)->fetch();
-    $entity = HLBT::compileEntity($hlblock);
-    $entity_data_class = $entity->getDataClass();
-    
     if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
                 $fields = array( 
-                    'UF_NAME' => $item["UF_NAME"],
-                    'UF_DISABLE' => !!$item["UF_DISABLE"] ? 1 : 0,
-                    'UF_SORT' => intval($item["UF_SORT"])
+                    "ID" => $item["ID"],
+                    "UF_NAME" => $item["UF_NAME"],
+                    "UF_DISABLE" => !!$item["UF_DISABLE"] ? 1 : 0,
+                    "UF_SORT" => intval($item["UF_SORT"])
                 );
-                
-                $obResult = ( intval($item['ID']) > 0 ) 
-                                ? $entity_data_class::update($item['ID'], $fields) 
-                                : $entity_data_class::add($fields);
-                
-                $res = array("success" => $obResult->isSuccess(), "ID"=> $obResult->getID() );
+                $res = $entity->save( $fields );
                 break;
-            case "del":
-                $id = intval($params['ID']);
-                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
-                if (!!$res){
-                    if ( $res->isSuccess() ){
-                        $res = array("id" => $id, "success"=> true);
-                    } else {
-                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
-                    }
-                } else {
-                    $res = array("success" => false, "error"=>"Unknown item #");
-                }
+            case "del": 
+                $res = $entity->del( intval($params['ID']) );
                 break;
         }
     } else {
-        $rsData = $entity_data_class::getList(array(
-                        'select' => array('*'),
-                        'order' => array('UF_SORT' => 'ASC', 'UF_NAME' => 'ASC')
-        ));
-        while($el = $rsData->fetch()){
-            $res[] = $el;
-        }
+        return $entity->list(array("sort" => array('UF_SORT' => 'ASC', 'UF_NAME' => 'ASC')));
     }
     return $res;
 }   //staffing
@@ -304,67 +244,29 @@ function staffing($params = false){
  * @return boolean
  */
 function employees($params = false){
-   
-    $hlbtId = hlbtByName('employees');
-    
-    if ($hlbtId < 1){
-        return false;
-    }
-    
-    $res = array();
-    $hlblock = HLBT::getById($hlbtId)->fetch();
-    $entity = HLBT::compileEntity($hlblock);
-    $entity_data_class = $entity->getDataClass();
+    $res;
+    $entity = new CHLBTEntity('employees');
     if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
-                /* User full-name */
-                $order = array('sort' => 'asc');
-                $tmp = 'sort';
-                $params = array("ID", "LOGIN", "NAME", "SECOND_NAME", "LAST_NAME");
-                $filter = array("=ID" => $item["UF_UID"]);
-                $rsUser = CUser::GetList($order, $tmp, $filter, $params);
-                if ($user = $rsUser->Fetch()) {
-                    $empName = sprintf("%s %s %s", $user["LAST_NAME"], $user["NAME"], $user["SECOND_NAME"]);
-                } else {
-                    $empName = "Неизвестный";
-                }
 
                 $row  = array(
+                    "ID"      => $item["ID"],
                     "UF_UID"  => $item["UF_UID"],
-                    "UF_EMPNAME"=>$empName,
+                    "UF_EMPNAME"=>$item["UF_EMPNAME"],
                     "UF_DVS"  => $item["UF_DVS"],
                     "UF_STAFF"=> $item["UF_STAFF"],
                     "UF_ADDED"=> Bitrix\Main\Type\Date::createFromTimestamp(strtotime($item["UF_ADDED"])),
                     "UF_END"  => !!$item["UF_END"] ? Bitrix\Main\Type\Date::createFromTimestamp(strtotime($item["UF_END"])) : null
                 );
-                
-                $obResult = ( intval($item['ID']) > 0 ) 
-                                ? $entity_data_class::update($item['ID'], $row) 
-                                : $entity_data_class::add($row);
-                $res = array(
-                                "success" => $obResult->isSuccess(), 
-                                "ID"=> $obResult->getID(),
-                                "error" => $obResult->isSuccess() ? null : $obResult->getErrorMessages()
-                            );
-                
-                if ( $obResult->isSuccess() ){
-                    $res["item"] = employees(array("ID" => $obResult->getID()));
+                $res = $entity->save($row);
+                if ($res["success"]) {
+                    $res["item"] = employees( array("ID" => $res["item"][0]["ID"]) );
                 }
                 break;
             case "del":
-                $id = intval($params['ID']);
-                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
-                if (!!$res){
-                    if ( $res->isSuccess() ){
-                        $res = array("id" => $id, "success"=> true);
-                    } else {
-                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
-                    }
-                } else {
-                    $res = array("success" => false, "error"=>"Unknown item #");
-                }
+                $res = $entity->del(intval($params['ID']));
                 break;
         }
     } else {
@@ -375,17 +277,16 @@ function employees($params = false){
         
         $args = array( 'select' => array('*') );
         if (
-                (!!$params) && (intval($params["ID"])>0)
+                (!!$params) 
+             && (intval($params["ID"]) > 0)
            ){
             $args['filter'] = array('=ID' => $params["ID"]);
         }
-        
-        $rsData = $entity_data_class::getList($args);
-        while($el = $rsData->fetch()){
-            
+        $data = $entity->list($args);
+        foreach($data as $el){
             foreach ($dirs->users as $_u){
                 if ($el["UF_UID"] == $_u["ID"]){
-                    $el["UF_EMPNAME"] = sprintf("%s %s %s", $_u["LAST_NAME"], $_u["NAME"], $_u["SECOND_NAME"]);
+                    $el["UF_LOGIN"] = $_u["LOGIN"];
                     break;
                 }
             }
@@ -409,29 +310,18 @@ function employees($params = false){
             $el["UF_ADDED"] = (!!$el["UF_ADDED"]) ? $el["UF_ADDED"]->getTimestamp()*1000 : null;
             $el["UF_END"] = (!!$el["UF_END"]) ? $el["UF_END"]->getTimestamp()*1000 : null;
             
-            
             $res[] = $el;
         }
     }
+   
 
     return $res;
 
 }   //employees
 
 function acts($params = false){
-    $hlbtId = hlbtByName('WpActions');
-    
-    if ($hlbtId < 1){
-        return array(
-                        "success" => false, 
-                        "error" => "No HLBT WpActions exists"
-               );
-    }
-    
+    $entity = new CHLBTEntity('WpActions');
     $res = array();
-    $hlblock = HLBT::getById($hlbtId)->fetch();
-    $entity = HLBT::compileEntity($hlblock);
-    $entity_data_class = $entity->getDataClass();
     if ( ($params !== false) && (!!$params["action"]) ){
         global $USER;
         switch($params["action"]){
@@ -440,6 +330,7 @@ function acts($params = false){
                 $meta = (!!$item["UF_META"]) ? json_encode($item["UF_META"]) : null;
 
                 $row  = array(
+                    "ID"          => $item["ID"],
                     "UF_ADT"      => Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($item["UF_ADT"])),
                     "UF_RED"      => 0,
                     "UF_DVS"      => $item["UF_DVS"],
@@ -459,29 +350,13 @@ function acts($params = false){
                     "UF_INSTIME"  => new Bitrix\Main\Type\DateTime()
                 );
                 
-                $obResult = ( intval($item['ID']) > 0 ) 
-                                ? $entity_data_class::update($item['ID'], $row) 
-                                : $entity_data_class::add($row);
-                $res = array(
-                                "success" => $obResult->isSuccess(), 
-                                "ID"=> $obResult->getID(),
-                                "error" => $obResult->isSuccess() ? null : $obResult->getErrorMessages(),
-                                "item" => $obResult->isSuccess() ? acts(array("ID" => $obResult->getID())) : null
-                            );
-                
+                $res = $entity->save($row);
+                if ($res["success"]){
+                    $res["item"] = acts( array("ID" => $res["item"][0]["ID"]) );
+                }
                 break;
             case "del":
-                $id = intval($params['ID']);
-                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
-                if (!!$res){
-                    if ( $res->isSuccess() ){
-                        $res = array("id" => $id, "success"=> true);
-                    } else {
-                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
-                    }
-                } else {
-                    $res = array("success" => false, "error"=>"Unknown item #");
-                }
+                $res = $entity->del( intval($params['ID']) );
                 break;
         }
     } else {
@@ -510,8 +385,9 @@ function acts($params = false){
             }
         }
         
-        $rsData = $entity_data_class::getList($args);
-        while( $el = $rsData->fetch() ){
+        $res = array();
+        $data = $entity->list($args);
+        foreach($data as $el){
             if (!!$el["UF_DVS"]){
                 foreach ($dirs->dvss as $_d){
                     if ($el["UF_DVS"] == $_d["ID"]){
@@ -554,26 +430,15 @@ function acts($params = false){
  * @return Array
  */
 function reds($params = false){
-    $hlbtId = hlbtByName('WpActions');
-    
-    if ($hlbtId < 1){
-        return array(
-                        "success" => false, 
-                        "error" => "No HLBT WpActions exists"
-               );
-    }
-    
-    $res = array();
-    $hlblock = HLBT::getById($hlbtId)->fetch();
-    $entity = HLBT::compileEntity($hlblock);
-    $entity_data_class = $entity->getDataClass();
+    $res;
+    $entity = new CHLBTEntity('WpActions');
     if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
                 global $USER;
                 $item = $params["item"];
-                
                 $row  = array(
+                    "ID"          => $item["ID"],
                     "UF_ADT"      => Bitrix\Main\Type\Date::createFromTimestamp(strtotime($item["UF_ADT"])),
                     "UF_RED"      => 1,
                     "UF_DVS"      => null,
@@ -584,33 +449,18 @@ function reds($params = false){
                     "UF_WWWATTR"  => 1,
                     "UF_READY"    => 1,
                     "UF_TEXT"     => $item["UF_TEXT"],
-                    "UF_AUTHOR"   => 10, //$USER->GetID(),
+                    "UF_AUTHOR"   => 10, //TODO: $USER->GetID(),
                     "UF_INSTIME"  => new Bitrix\Main\Type\DateTime()
                 );
                 
-                $obResult = ( intval($item['ID']) > 0 ) 
-                                ? $entity_data_class::update($item['ID'], $row) 
-                                : $entity_data_class::add($row);
-                $res = array(
-                                "success" => $obResult->isSuccess(), 
-                                "ID"=> $obResult->getID(),
-                                "error" => $obResult->isSuccess() ? null : $obResult->getErrorMessages(),
-                                "item" => $obResult->isSuccess() ? reds(array("ID" => $obResult->getID())) : null
-                            );
+                $res = $entity->save($row);
+                if ($res["success"]){
+                    $res["item"] = reds( array("ID" => $res["item"][0]["ID"]) );
+                }
                 
                 break;
             case "del":
-                $id = intval($params['ID']);
-                $res = ( $id > 0 ) ? $entity_data_class::delete($id) : false;
-                if (!!$res){
-                    if ( $res->isSuccess() ){
-                        $res = array("id" => $id, "success"=> true);
-                    } else {
-                        $res = array("id" => $id, "error"=>$res->getErrorMessages());
-                    }
-                } else {
-                    $res = array("success" => false, "error"=>"Unknown item #");
-                }
+                $res = $entity->del(intval($params['ID']));
                 break;
         }
     } else {
@@ -635,23 +485,20 @@ function reds($params = false){
             }
         }
         
-        try {
-            $rsData = $entity_data_class::getList($args);
-            while($el = $rsData->fetch()){
-                $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
-                $el["UF_INSTIME"] = (!!$el["UF_INSTIME"]) ? $el["UF_INSTIME"]->getTimestamp()*1000 : null;
-                if (!!$el["UF_AUTHOR"]){
+        $res = array();
+        $data = $entity->list($args);
+        foreach($data as $el){
+            $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
+            $el["UF_INSTIME"] = (!!$el["UF_INSTIME"]) ? $el["UF_INSTIME"]->getTimestamp()*1000 : null;
+            if (!!$el["UF_AUTHOR"]){
                     foreach ($users as $_u){
                         if ($el["UF_AUTHOR"] == $_u["ID"]){
                             $el["UF_AUTHOR"] = $_u["LOGIN"];
                             break;
                         }
                     }
-                }
-                $res[] = $el;            
             }
-        } catch(Exception $e) {
-            $res = array("success" => false, "error" => $e->getMessage() );
+            $res[] = $el;            
         }
     }
     

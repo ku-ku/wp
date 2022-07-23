@@ -46,6 +46,7 @@ import WpFrmUser from "~/components/WpFrmUser.vue";
 import WpFrmStaff from "~/components/WpFrmStaff.vue";
 import WpFrmEmployee from "~/components/WpFrmEmployee.vue";
 import WpSelUsers from "~/components/WpSelUsers.vue";
+import WpSelDvss from "~/components/WpSelDvss.vue";
 import WpSearchField from "~/components/WpSearchField.vue";
 
 const DIA_FORMS = {};
@@ -56,6 +57,7 @@ DIA_FORMS[DIA_MODES.user]   = WpFrmUser;
 DIA_FORMS[DIA_MODES.staff]  = WpFrmStaff;
 DIA_FORMS[DIA_MODES.emp]    = WpFrmEmployee;
 DIA_FORMS[DIA_MODES.emplist]= WpSelUsers;
+DIA_FORMS[DIA_MODES.dvslist]= WpSelDvss;
 
 export default {
     name: 'WpDialog',

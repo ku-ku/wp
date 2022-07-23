@@ -1,4 +1,5 @@
 import { empty } from "~/utils";
+
 const A_STATUSES = [
     {ID: 1, name: 'ПРОВЕДЕНО'},
     {ID: 2, name: 'Перенесено'},
@@ -30,6 +31,7 @@ export const mutations = {
      * @param {Object} payload exampl: { users|divisions|...: {ID+, ...} }
      */
     upd(state, payload){
+        console.log('committing (upd)', payload);
         Object.keys(payload).map( k=>{
             const o = payload[k];
             if ( !Array.isArray(state[k]) ){

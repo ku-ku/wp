@@ -46,7 +46,7 @@
                        content-class="event-details"
                        :color="event.color">
                 <template v-slot:activator="{ on, attrs }">
-                    <div v-html="event.title" 
+                    <div v-html="get('title', event)" 
                          v-on="on"
                          v-bind:class="{'red-day': event.red}">
                     </div>
@@ -167,6 +167,9 @@ export default {
                         s += `<div class="time">${ tm }</div>`;
                     }
                     return s;
+                case 'title':
+                    return ((!!v.red) ? '<i aria-hidden="true" class="v-icon notranslate mdi mdi-flag-variant" style="font-size: 12px;"></i>&nbsp;' : '')
+                           + v.title;
             }
         },
         gotoday(){
@@ -240,7 +243,7 @@ export default {
         }
     }
 }
-.v-event {
+.v-event, .v-event-timed {
     & .red-day{
         background: #fff;
         color: #D50000;

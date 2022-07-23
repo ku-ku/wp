@@ -234,7 +234,7 @@ function install(){
                     'ENTITY_ID' => $UFObject,
                     'FIELD_NAME' => 'UF_UID',
                     'USER_TYPE_ID' => 'integer',
-                    'MANDATORY' => 'Y',
+                    'MANDATORY' => 'N',
                     "EDIT_FORM_LABEL" => Array('ru'=>'Пользователь #', 'en'=>'User'), 
                     "LIST_COLUMN_LABEL" => Array('ru'=>'Пользователь #', 'en'=>'User Id'),
                     "LIST_FILTER_LABEL" => Array('ru'=>'Пользователь #', 'en'=>'User Id'), 
