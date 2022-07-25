@@ -4,7 +4,8 @@
         <v-btn icon
             class="ma-2"
             @click="$refs.calendar.prev()">
-            <v-icon>mdi-chevron-left</v-icon>
+            <v-icon v-if="loading">mdi-sync mdi-spin</v-icon>
+            <v-icon v-else>mdi-chevron-left</v-icon>
         </v-btn>
         <v-btn outlined dark color="secondary lighten-3"
                style="min-width: 8rem"
@@ -113,7 +114,7 @@
 </v-container>
 </template>
 <script>
-import { mapGetters } from 'vuex';
+import { mapState } from 'vuex';
 import $moment from "moment";
 import { DIA_MODES } from "~/utils";
 
@@ -125,26 +126,20 @@ export default {
         const _d = new Date();
         return {
             DIA_MODES,
+            loading: false,
             value: '',
             type: 'month',
             types: [{name: 'Месяц', id:'month'}, {name: 'Неделя', id:'week'}, {name:'День', id:'day'}],
             all: null
         };
     },
-    created(){
-/**
-        this.$store.commit("default");
-        this.$fetch();
-*/        
-    },
-    computed: {
-        ...mapGetters([
-            'period'
-        ])
-    },
+    computed: mapState({
+        period: state => state.period
+    }),
     methods:{
         async _fetch(){
             console.log('fetch at period', this.period);
+            this.loading = true;
             try {
                 var all = await this.$store.dispatch("data/list", "acts");
                 this.all = all.concat(
@@ -154,6 +149,8 @@ export default {
                 this.all = [];
                 console.log('ERR (calendar)', e);
                 $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
+            } finally {
+                this.loading = false;
             }
         },
         get(q, v){

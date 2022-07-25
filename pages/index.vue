@@ -10,9 +10,13 @@
         <v-col cols="auto" class="wp-dt" v-html="get('dt', d)"></v-col>
         <v-col>
           <ul class="red-days" v-if="get('reds', d).length > 0">
-            <li v-for="r in get('reds', d)">{{r.UF_TEXT}}</li>
+            <li v-for="r in get('reds', d)"
+                :key="'red-' + r.ID">
+                {{r.UF_TEXT}}
+            </li>
           </ul>
-          <v-row v-for="a in get('acts', d)">
+          <v-row v-for="a in get('acts', d)"
+                :key="'act-' + a.ID">
             <v-col cols="12" class="wp-action">
               {{a.UF_TEXT}}
               <div class="wp-action__meta">

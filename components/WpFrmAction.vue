@@ -78,12 +78,12 @@
                             no-data-text="нет данных"
                             v-model="item.UF_PLACE"
                             hide-no-data
-                            item-value="ID"
                             clearable
                             required
                             hide-details
                             label="Место проведения"
                             :items="places"
+                            item-value="NAME"
                             :error="errs.UF_PLACE"
                             >
             </v-combobox>
@@ -189,31 +189,42 @@
 import $moment from "moment";
 import { mxForm } from '~/utils/mxForm.js';
 import { DIA_MODES, empty } from "~/utils/";
+import { mapState } from 'vuex';
+
 
 export default {
     name: "WpFrmAction",
     mixins: [ mxForm ],
+    fetchOnServer: false,
     components: {
         WpDialog: () => import("~/components/WpDialog.vue")
     },
+    beforeCreate(){
+        /** preload's */
+        (async ()=>{
+            try {
+                await $nuxt.$store.dispatch("data/list", "statuses");
+                await $nuxt.$store.dispatch("data/list", "divisions");
+                await $nuxt.$store.dispatch("data/list", "employees");
+                await $nuxt.$store.dispatch("data/list", "places");
+            } catch(e){
+                console.log('ERR (action dirs)', e);
+            }
+        })();
+    },
     async fetch(){
-        try {
-            this.statuses = await this.$store.dispatch("data/list", "statuses");
-            this.divisions = await this.$store.dispatch("data/list", "divisions");
-            this.employees = await this.$store.dispatch("data/list", "employees");
-            this.places = await this.$store.dispatch("data/list", "places");
-        } catch(e){
-            console.log('ERR (action)', e);
+        const ID = this.item?.ID || -1;
+        console.log("fetching act #", ID);
+        if ( ID > 0 ){
+            const resp = await $nuxt.api("acts", { ID }); //full read data
+            this.item = Array.isArray(resp) ? resp[0] : {};
+            this.item.UF_STATUS = Number(this.item.UF_STATUS);
         }
     },
     data(){
         return {
             DIA_MODES,
             error: null,
-            statuses: null,
-            divisions: null,
-            employees: null,
-            places: null,
             meta_key: 'HEADS',        //UF_META key: headers(HEADS) | responsibles(EMPS): see adds()
             item: {
                 ID: -1,
@@ -233,10 +244,22 @@ export default {
             errs: {}
         };
     },
-    created(){
-        this.$fetch();
-    },
+    computed: mapState({
+        statuses:  state => state.data.statuses,
+        divisions: state => state.data.divisions,
+        employees: state => state.data.employees,
+        places:    state => state.data.places
+    }),
     methods: {
+        use(item){
+            this.item = {ID: item.ID};
+            this.$fetch();
+            //this.$fetch();
+        },
+        /**
+         * Call add's choose dlg
+         * @param {string} q HEADS | EMPS for list
+         */
         adds(q){
             this.meta_key = q;
             //get choose dlg

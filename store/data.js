@@ -197,7 +197,7 @@ export const actions = {
 };      //actions
 
 export const getters = {
-    all: (state)=>{
+    all: state => {
         var a = state.acts || [];
         return a.concat(state.reds);
     }

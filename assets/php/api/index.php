@@ -80,13 +80,17 @@ function user(){
         $group = CGroup::GetList($f, $sort, $filter)->fetch();
         $planningGroupId = (!!$group) ? $group["ID"] : -1;
         
-        return array(
+        $res = array(
             "id"    => $USER->GetID(),
             "name"  => $USER->GetFullName(),
             "adm"   => $USER->IsAdmin(),
             "haswp" => $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray())
         );
-        
+        if ( $res["haswp"] ){
+            $adds = new CHLBTAdds("USER", $USER->GetID());
+            $res["DVSS"] = $adds->list(); 
+        }
+        return $res;
     }
     return array( "id" => -1 );
 }   //user
@@ -366,11 +370,9 @@ function acts($params = false){
         $dirs->users= array_slice(users(false), 0);
         $dirs->emps = array_slice(employees(false), 0);
         $dirs->dvss = array_slice(divisions(false), 0);
-        
         $args = array( 'select' => array('*') );
-        if (
-                (!!$params) && (intval($params["ID"])>0)
-           ){
+        $byId = (!!$params) && (intval($params["ID"])>0);
+        if ( $byId ) {
             $args['filter'] = array('=ID' => $params["ID"]);
         } else {
             $args['filter'] = array('=UF_RED' => 0);
@@ -409,22 +411,26 @@ function acts($params = false){
                     }
                 }
             }
-            if (!!$el["UF_AUTHOR"]){
-                foreach ($dirs->users as $_u){
-                    if ($el["UF_AUTHOR"] == $_u["ID"]){
-                        $el["UF_AUTHOR"] = $_u["LOGIN"];
-                        break;
-                    }
-                }
-            }
             $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
             $el["UF_INSTIME"] = (!!$el["UF_INSTIME"]) ? $el["UF_INSTIME"]->getTimestamp()*1000 : null;
             
-            $adds = new CHLBTAdds("HEADS", $id);
-            $el["HEADS"] = $adds->list();
+            //add's by id only load (optimize)
+            if ($byId){
+                if (!!$el["UF_AUTHOR"]){
+                    foreach ($dirs->users as $_u){
+                        if ($el["UF_AUTHOR"] == $_u["ID"]){
+                            $el["UF_AUTHOR"] = $_u["LOGIN"];
+                            break;
+                        }
+                    }
+                }
 
-            $adds = new CHLBTAdds("EMPS", $id);
-            $el["EMPS"] = $adds->list();
+                $adds = new CHLBTAdds("HEADS", $id);
+                $el["HEADS"] = $adds->list();
+
+                $adds = new CHLBTAdds("EMPS", $id);
+                $el["EMPS"] = $adds->list();
+            }
             
             $res[] = $el;
         }
@@ -518,7 +524,7 @@ function places(){
     global $DB;
     $rsData = $DB->Query("select distinct UF_PLACE from wpactions where UF_PLACE is not NULL order by 1");
     while( $el = $rsData->fetch() ){
-        $res[] = $el['UF_PLACE'];
+        $res[] = array("NAME" => $el['UF_PLACE']);
     }
 
     return $res;
