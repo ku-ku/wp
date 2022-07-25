@@ -110,9 +110,9 @@
                     <v-btn small 
                            block 
                            tile
-                           v-on:click="adds('headers')">
-                        <v-badge :content="get('headers')"
-                                 v-bind:class="{'no-val': !get('headers')}"
+                           v-on:click="adds('HEADS')">
+                        <v-badge :content="get('HEADS')"
+                                 v-bind:class="{'no-val': !get('HEADS')}"
                                  color="secondary lighten-4">
                             Дополнительно...
                         </v-badge>
@@ -122,9 +122,9 @@
                     <v-btn small 
                            block 
                            tile
-                           v-on:click="adds('responsibles')">
-                        <v-badge :content="get('responsibles')"
-                                 v-bind:class="{'no-val': !get('responsibles')}"
+                           v-on:click="adds('EMPS')">
+                        <v-badge :content="get('EMPS')"
+                                 v-bind:class="{'no-val': !get('EMPS')}"
                                  color="secondary lighten-4">
                            Ответственные за подготовку...
                         </v-badge>
@@ -214,7 +214,7 @@ export default {
             divisions: null,
             employees: null,
             places: null,
-            meta_key: 'headers',        //UF_META key: headers | responsibles: see adds()
+            meta_key: 'HEADS',        //UF_META key: headers(HEADS) | responsibles(EMPS): see adds()
             item: {
                 ID: -1,
                 UF_RED: 0,
@@ -228,8 +228,7 @@ export default {
                 UF_PLACE: null,
                 UF_CHIEF: null,
                 UF_STATUS: null,
-                UF_COMMENTS: null,
-                UF_META: null           //Object: {headers[IDs]?, responsibles[IDs]?}
+                UF_COMMENTS: null
             },
             errs: {}
         };
@@ -238,34 +237,14 @@ export default {
         this.$fetch();
     },
     methods: {
-        use(item){
-            this.item = {...item};
-            //check meta structure
-            if ( !(!!this.item.UF_META) ){
-                this.item.UF_META = {};
-            } else {
-                var meta = {...item.UF_META};
-                delete this.item.UF_META;
-                this.item.UF_META = meta;
-            }
-            if ( !(!!this.item.UF_META.headers) ){
-                this.item.UF_META.headers = [];
-            }
-            if ( !(!!this.item.UF_META.responsibles) ){
-                this.item.UF_META.responsibles = [];
-            }
-        },
         adds(q){
             this.meta_key = q;
             //get choose dlg
-            const arr = this.item.UF_META[q];
+            const arr = this.item[q]
             this.$refs["dlg"].open(arr);
         },
         onadds(e){
-            if ( !(!!this.item.UF_META) ){
-                this.item.UF_META = {};
-            }
-            this.item.UF_META[this.meta_key] = e;  //TODO: do not mutate vuex store state outside mutation handlers
+            this.item[this.meta_key] = e; 
             this.$forceUpdate();
         },
         set(q, val){
@@ -278,10 +257,10 @@ export default {
         },
         get(q){
             switch(q){
-                case "headers":
-                case "responsibles":
-                    return (this.item.UF_META?.hasOwnProperty(q)) 
-                                ? this.item.UF_META[q]?.length
+                case "HEADS":
+                case "EMPS":
+                    return (this.item.hasOwnProperty(q)) 
+                                ? this.item[q]?.length
                                 : null;
             }
             return false;

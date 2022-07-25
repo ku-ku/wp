@@ -149,11 +149,7 @@ function users($params = false){
                     unset($item["PASSWORD"]);
                     unset($item["CONFIRM_PASSWORD"]);
                 }
-                
-                if (!!$item["DVSS"]){
-                    $item["WORK_NOTES"] = json_encode( array("divisions" => $item["DVSS"]) );
-                }
-                
+
                 $user = new CUser();
                 $res = false;
                 if (intval($item["ID"]) > 0){
@@ -165,7 +161,9 @@ function users($params = false){
                 }
                 
                 if ( empty($user->LAST_ERROR) ){
-                    $res = array("success" => true, "ID" => $res);
+                    $adds = new CHLBTAdds("USER", $res);
+                    $dvss = $adds->addAll($item["DVSS"]);
+                    $res = array("success" => true, "ID" => $res, "DVSS" => $dvss);
                 } else {
                     $res = array("success" => false, "error" => $user->LAST_ERROR, "ID" => $item["ID"]);
                 }
@@ -176,6 +174,9 @@ function users($params = false){
                     $user = new CUser();
                     $res = $user->Delete($id);
                     if ($res!==false){
+                        $adds = new CHLBTAdds("USER", $id);
+                        $adds->delAll();
+                        
                         $res = array("id" => $id, "success" => true);
                     } else {
                         $res = array("id" => $id, "error" => $user->LAST_ERROR);
@@ -195,12 +196,8 @@ function users($params = false){
         while( $el = $rsUsers->Fetch() ) {
             if ( strpos($el["LOGIN"], "esia_") === false ) {
                 $el["WP_PLANNING"] = in_array($planningGroupId, CUser::GetUserGroup($el["ID"])) ? "Y" : null;
-                if (!!$el["WORK_NOTES"]){
-                    $json = json_decode($el["WORK_NOTES"]);
-                    if ( JSON_ERROR_NONE == json_last_error() ){
-                        $el["DVSS"] = $json->divisions;
-                    }
-                }
+                $adds = new CHLBTAdds("USER", $el["ID"]);
+                $el["DVSS"] = $adds->list(); 
                 $res[] = $el;
             }
         };
@@ -327,7 +324,6 @@ function acts($params = false){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
-                $meta = (!!$item["UF_META"]) ? json_encode($item["UF_META"]) : null;
 
                 $row  = array(
                     "ID"          => $item["ID"],
@@ -346,13 +342,19 @@ function acts($params = false){
                     "UF_STATUS"   => $item["UF_STATUS"],
                     "UF_COMMENTS" => $item["UF_COMMENTS"],
                     "UF_AUTHOR"   => 10, //$USER->GetID(),
-                    "UF_META"     => $meta,
                     "UF_INSTIME"  => new Bitrix\Main\Type\DateTime()
                 );
                 
                 $res = $entity->save($row);
                 if ($res["success"]){
-                    $res["item"] = acts( array("ID" => $res["item"][0]["ID"]) );
+                    //save add's
+                    $id = $res["item"][0]["ID"];
+                    $adds = new CHLBTAdds("HEADS", $id);
+                    $adds->addAll($item["HEADS"]);
+                    $adds = new CHLBTAdds("EMPS", $id);
+                    $adds->addAll($item["EMPS"]);
+                    
+                    $res["item"] = acts( array("ID" => $id) );
                 }
                 break;
             case "del":
@@ -388,6 +390,9 @@ function acts($params = false){
         $res = array();
         $data = $entity->list($args);
         foreach($data as $el){
+            
+            $id = $el["ID"];
+            
             if (!!$el["UF_DVS"]){
                 foreach ($dirs->dvss as $_d){
                     if ($el["UF_DVS"] == $_d["ID"]){
@@ -414,9 +419,13 @@ function acts($params = false){
             }
             $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
             $el["UF_INSTIME"] = (!!$el["UF_INSTIME"]) ? $el["UF_INSTIME"]->getTimestamp()*1000 : null;
-            if (!!$el["UF_META"]){
-                $el["UF_META"] = json_decode($el["UF_META"]);
-            }
+            
+            $adds = new CHLBTAdds("HEADS", $id);
+            $el["HEADS"] = $adds->list();
+
+            $adds = new CHLBTAdds("EMPS", $id);
+            $el["EMPS"] = $adds->list();
+            
             $res[] = $el;
         }
     }

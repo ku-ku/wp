@@ -580,4 +580,95 @@ function install(){
     } else {
         echo 'WpActions HLBT already exists' . PHP_EOL;
     }  //-- WpActions --------------------------------------------------------------------------------------------------------
+    
+    /**
+     * Add`s for more
+     */
+    
+    /** Actions & Reds HLBT */
+    if ( !exits('WpAdds') ){
+        $arLangs = Array(
+            'ru' => 'Доп.инфо',
+            'en' => 'Adds inf'
+        );
+        $result = HLBT::add(array(
+            'NAME' => 'WpAdds',
+            'TABLE_NAME' => 'wpadds'
+        ));
+        if ($result->isSuccess()) {
+            $id = $result->getId();
+            foreach($arLangs as $lang_key => $lang_val){
+                HL\HighloadBlockLangTable::add(array(
+                    'ID' => $id,
+                    'LID' => $lang_key,
+                    'NAME' => $lang_val
+                ));
+            }
+            $UFObject = 'HLBLOCK_'.$id;
+            $arFields = Array(
+                'UF_Q'=>Array(
+                    'ENTITY_ID' => $UFObject,
+                    'FIELD_NAME' => 'UF_Q',
+                    'USER_TYPE_ID' => 'string',
+                    'MANDATORY' => 'Y',
+                    "EDIT_FORM_LABEL" => Array('ru'=>'Тип связи', 'en'=>'Link type'), 
+                    "LIST_COLUMN_LABEL" => Array('ru'=>'Тип связи', 'en'=>'Link type'),
+                    "LIST_FILTER_LABEL" => Array('ru'=>'Тип связи', 'en'=>'Link type'), 
+                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
+                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
+                ),
+                'UF_MAIN'=>Array(
+                    'ENTITY_ID' => $UFObject,
+                    'FIELD_NAME' => 'UF_MAIN',
+                    'USER_TYPE_ID' => 'integer',
+                    'MANDATORY' => 'Y',
+                    "EDIT_FORM_LABEL" => Array('ru'=>'Ключ гл.', 'en'=>'Main key Id'), 
+                    "LIST_COLUMN_LABEL" => Array('ru'=>'Ключ гл.', 'en'=>'Main key Id'),
+                    "LIST_FILTER_LABEL" => Array('ru'=>'Ключ гл.', 'en'=>'Main key Id'), 
+                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
+                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
+                ),
+                'UF_LINK'=>Array(
+                    'ENTITY_ID' => $UFObject,
+                    'FIELD_NAME' => 'UF_LINK',
+                    'USER_TYPE_ID' => 'integer',
+                    'MANDATORY' => 'Y',
+                    "EDIT_FORM_LABEL" => Array('ru'=>'Ключ св.', 'en'=>'Link key Id'), 
+                    "LIST_COLUMN_LABEL" => Array('ru'=>'Ключ св.', 'en'=>'Link key Id'),
+                    "LIST_FILTER_LABEL" => Array('ru'=>'Ключ св.', 'en'=>'Link key Id'), 
+                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
+                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
+                ),
+                'UF_ADD'=>Array(
+                    'ENTITY_ID' => $UFObject,
+                    'FIELD_NAME' => 'UF_ADD',
+                    'USER_TYPE_ID' => 'string',
+                    'MANDATORY' => 'N',
+                    "EDIT_FORM_LABEL" => Array('ru'=>'Дополнительно', 'en'=>'Additional'), 
+                    "LIST_COLUMN_LABEL" => Array('ru'=>'Дополнительно', 'en'=>'Additional'),
+                    "LIST_FILTER_LABEL" => Array('ru'=>'Дополнительно', 'en'=>'Additional'), 
+                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
+                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
+                ),
+            );
+            
+            echo sprintf('#%d %s successed', $id, 'WpAdds') . PHP_EOL;
+            $arSavedFields = array();
+            foreach($arFields as $arField){
+                $obUserField  = new CUserTypeEntity();
+                $fieldId = $obUserField->Add($arField);
+                $arSavedFields[] = $fieldId;
+            }
+            echo 'WpAdds fields ids:' . PHP_EOL;
+            print_r($arSavedFields);
+        } else {
+            $errors = $result->getErrorMessages();
+            echo 'ERR (WpAdds)' . PHP_EOL;
+            print_r($errors);
+            return;
+        }
+    } else {
+        echo 'WpAdds HLBT already exists' . PHP_EOL;
+    }
+    
 }

@@ -113,4 +113,77 @@ class CHLBTEntity extends CHLBT {
         return $res;
     }   //del
 }       //CHLBTEntity
+
+class CHLBTAdds extends CHLBTEntity{
+    private $q = 'USER'; /** USER | HDRS | EMPS */
+    private $mainId;
+    /**
+     * @param {String} q USER | HEADS | EMPS
+     * @parem {integer} mainId
+     */
+    public function __construct( $q, $mainId ) {
+        $this->q = $q;
+        $this->mainId = $mainId;
+        parent::__construct('WpAdds');
+    }
+    
+    public function list( $args = false){
+        $args = array(
+                        "select" => ["UF_LINK"],
+                        "filter" => [
+                            "LOGIC" => "AND",
+                            ['=UF_Q' => $this->q],
+                            ['=UF_MAIN' => $this->mainId]
+                        ]
+        );
+        $_res = parent::list($args);
+        $res = array();
+        foreach($_res as $r){
+            $res[] = $r["UF_LINK"];
+        }
+        return $res;
+    }
+    
+    /**
+     * Deleting all by mainId
+     * @return 
+     */
+    public function delAll(){
+        global $DB;
+        $res = $DB->Query(sprintf("delete from wpadds where UF_Q='%s' and UF_MAIN=%d", $this->q, $this->mainId));
+        return $res;
+    }
+    
+    public function addAll($links){
+        global $DB;
+        $res = array();
+        
+        $DB->StartTransaction();
+        
+        $ok = true;
+        
+        $this->delAll();
+        foreach($links as $l){
+            $arr = array("UF_Q" => "'" . $this->q . "'", "UF_MAIN" => $this->mainId, "UF_LINK" => $l);
+            $_res = $DB->Insert("wpadds", $arr, "",  false /*debug*/, ""  /*exist_id*/, true /*ignore_errors*/);
+            if (intval($_res) > 0 ){
+                $res[] = $_res;
+            } else {
+                $res = array("success" => false, "error" => sprintf("don`t save links at %s # %d->%d: %s", $this->q, $this->mainId, $l, $DB->db_Error));
+                $ok = false;
+                break;
+            }
+        }
+        
+        if ($ok){
+            $DB->Commit();
+        } else {
+            $DB->Rollback();
+        }
+        
+        return $res;
+    }   //addAll
+    
+}   //CHLBTAdds
+
 ?>
