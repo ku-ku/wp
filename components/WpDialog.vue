@@ -131,6 +131,7 @@ export default {
          * @param {Object?} item for editing
          */
         open(item){
+            var item = (!!item) ? item : {ID: -1};
             const f = this.$refs["form"];
             f.use(item);
             this.fAdd = f.has('add');

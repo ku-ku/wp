@@ -250,6 +250,9 @@ export default {
     methods: {
         use(item){
             this.item = {ID: item.ID};
+            if (this.item.ID < 1){
+                this.item.UF_ADT = (new Date()).getTime();
+            }
             this.$fetch();
             //this.$fetch();
         },
