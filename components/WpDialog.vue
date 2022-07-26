@@ -1,6 +1,7 @@
 <template>
     <v-dialog content-class="wp-dialog"
               v-model="show"
+              eager
               scrollable
               max-width="800">
         <v-card tile>
@@ -87,7 +88,7 @@ export default {
                 searchable: false,
                 title: undefined
             }
-        }
+        };
     },
     computed: {
         component(){
@@ -111,7 +112,7 @@ export default {
     methods: {
         title(){
             if (empty(this.needs.title)){
-                return (this.fAdd) ? 'Новая запись' : 'Редактирование'
+                return (this.fAdd) ? 'Новая запись' : 'Редактирование';
             } else {
                 return this.needs.title;
             }
@@ -130,12 +131,10 @@ export default {
          * @param {Object?} item for editing
          */
         open(item){
+            const f = this.$refs["form"];
+            f.use(item);
+            this.fAdd = f.has('add');
             this.show = (new Date()).getTime();
-            this.$nextTick(()=>{
-                const f = this.$refs["form"];
-                f.use(item);
-                this.fAdd = f.has('add');
-            });
         },
         save(){
             const f = this.$refs["form"];

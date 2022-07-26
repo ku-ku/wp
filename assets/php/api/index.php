@@ -524,7 +524,7 @@ function places(){
     global $DB;
     $rsData = $DB->Query("select distinct UF_PLACE from wpactions where UF_PLACE is not NULL order by 1");
     while( $el = $rsData->fetch() ){
-        $res[] = array("NAME" => $el['UF_PLACE']);
+        $res[] = $el['UF_PLACE'];
     }
 
     return $res;

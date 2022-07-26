@@ -122,6 +122,14 @@ import { DIA_MODES } from "~/utils";
 export default {
     name: 'WpCalendar',
     fetchOnServer: false,
+    middleware({ store }){
+        //preload all dir`s
+        (async ()=>{
+            await store.dispatch("data/list", "divisions");
+            await store.dispatch("data/list", "employees");
+            await store.dispatch("data/list", "places");
+        })();
+    },
     data(){
         const _d = new Date();
         return {
@@ -218,10 +226,10 @@ export default {
             var item = {ID: -1, UF_ADT: at};
             this.$refs.dlgRed.open(item);
         },
-        edit({event}){
+        edit({ event }){
             const n = this.all.findIndex( a => a.ID === event.id );
             var item = n < 0 ? null : this.all[n];
-            this.$refs[ (1==item.UF_RED) ? "dlgRed" : "dlgAct"].open(item);
+            this.$refs[ (1==item.UF_RED) ? "dlgRed" : "dlgAct" ].open(item);
         }
     }
 }

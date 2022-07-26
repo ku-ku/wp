@@ -83,9 +83,7 @@
                             hide-details
                             label="Место проведения"
                             :items="places"
-                            item-value="NAME"
-                            :error="errs.UF_PLACE"
-                            >
+                            :error="errs.UF_PLACE">
             </v-combobox>
         </v-col>
     </v-row>
@@ -159,10 +157,10 @@
                             label="Отметка о проведении"
                             no-data-text="нет данных"
                             hide-no-data
-                            item-value="ID"
                             clearable
                             required
                             hide-details
+                            item-value="ID"
                             item-text="name"
                             :items="statuses">
             </v-autocomplete>
@@ -203,7 +201,6 @@ export default {
         /** preload's */
         (async ()=>{
             try {
-                await $nuxt.$store.dispatch("data/list", "statuses");
                 await $nuxt.$store.dispatch("data/list", "divisions");
                 await $nuxt.$store.dispatch("data/list", "employees");
                 await $nuxt.$store.dispatch("data/list", "places");

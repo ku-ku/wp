@@ -27,7 +27,7 @@ export const mxForm = {
             this[q] = v;
         },
         use(item){
-            this.item = {...item};
+            this.item = { ...item };
             this.$nextTick(()=>{
                 $($(this.$el).find("input").get(0)).trigger("focus");
             });

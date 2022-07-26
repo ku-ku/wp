@@ -12,6 +12,7 @@ export const state = ()=>({
     divisions: null,
     staffing: null,
     employees: null,
+    places: null,
     acts: null,
     reds: null
 });
