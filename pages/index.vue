@@ -57,25 +57,23 @@ const _gen_days = ()=>{
 
 
 export default {
-  name: 'IndexPage',
-  async asyncData({store}) {
+  name: 'WpIndexPage',
+  async asyncData({ store }) {
         try {
+            store.commit("default");
+            store.commit("data/set", {acts: null, reds: null}); //clear before
             await store.dispatch("data/list", "acts");
             await store.dispatch("data/list", "reds");
         } catch(e){
             console.log('ERR (calendar)', e);
             $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
         }
-
+        
         return {
           now: $moment(),
           dates: _gen_days()
         };
-  }, //fetch
-  data(){
-    return {
-    }
-  },
+  }, 
   mounted(){
     this.$nextTick(()=>{
       const el = $(".v-list-item.current").get(0);

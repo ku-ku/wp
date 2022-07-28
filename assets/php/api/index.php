@@ -40,7 +40,9 @@ switch ($q){
     case "user":
         $data = user();
         break;
-    
+    case "imp":
+        $data = imp( $params );
+        break;
     default:
         $valid = false;
 }   //switch ($q...
@@ -71,7 +73,11 @@ function user(){
     if (!defined('PUBLIC_AJAX_MODE')) {
         define('PUBLIC_AJAX_MODE', true);
     }
+    
     global $USER;
+
+    $USER->Authorize(10); 
+
     if ( $USER->IsAuthorized() ){
         //Check group 
         $f = "ID";
@@ -84,7 +90,8 @@ function user(){
             "id"    => $USER->GetID(),
             "name"  => $USER->GetFullName(),
             "adm"   => $USER->IsAdmin(),
-            "haswp" => $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray())
+            "haswp" => $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray()),
+            "login" => $USER->GetLogin()
         );
         if ( $res["haswp"] ){
             $adds = new CHLBTAdds("USER", $USER->GetID());
@@ -529,4 +536,14 @@ function places(){
 
     return $res;
 }   //places
+
+function imp($params){
+    $api = 'http://localhost:8060/zdyn/ap';
+    $params["format"] = "json";
+    $url = new \Bitrix\Main\Web\Uri($api);
+    $url->addParams($params);
+    $res = json_decode(\App\Helpers\CurlHelper::sendRequest('GET', $url->getUri())["body"]);
+    return $res;
+}   //imp...
+
 ?>

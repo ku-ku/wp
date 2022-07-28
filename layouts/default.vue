@@ -10,12 +10,27 @@
                            dark
                            color="primary"
                            temporary>
-        <v-list dense>
+        <v-list v-if="has('user')">
+          <v-list-item v-bind:class="{'wp-admin': has('admin')}">
+            <v-list-item-icon>
+              <v-icon>mdi-account</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title class="text-h6">
+                {{user.name}}
+              </v-list-item-title>
+              <v-list-item-subtitle>({{user.login}})</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+        <v-divider></v-divider>        
+        <v-list nav dense>
           <v-list-item to="/">
             <v-list-item-icon><v-icon>mdi-calendar-month</v-icon></v-list-item-icon>
             <v-list-item-title>План мероприятий</v-list-item-title>
           </v-list-item>
-          <v-list-item :to="{path:'/calendar'}">
+          <v-divider></v-divider>
+          <v-list-item :to="{path:'/calendar', replace: true}">
             <v-list-item-icon><v-icon>mdi-calendar-text</v-icon></v-list-item-icon>
             <v-list-item-title>Календарь</v-list-item-title>
           </v-list-item>
@@ -35,6 +50,15 @@
             <v-list-item-icon><v-icon>mdi-account-tie</v-icon></v-list-item-icon>
             <v-list-item-title>Сотрудники</v-list-item-title>
           </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item v-on:click="doimp()">
+            <v-list-item-icon><v-icon>mdi-table-arrow-up</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Импортировать...</v-list-item-title>
+              <v-list-item-subtitle>{{impPeriod}}</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
         </v-list>
       </v-navigation-drawer>  
       <v-container fluid>
@@ -47,6 +71,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 
 import WpBar from '~/components/WpBar.vue';
 import WpDialog from '~/components/WpDialog.vue';
@@ -58,23 +83,31 @@ export default {
     WpBar,
     WpDialog
   },
-  async asyncData({store}){
-      return {
-        user: await store.getters["user"]
-      }
-  },
   data(){
     return {
       DIA_MODES,
       navi: null
     }
   },
+  computed:  {
+    ...mapState({
+          user: state => state.data.user,
+          impPeriod: state => {
+            return state.period.start?.format("MMM, YYYY");
+          }
+    })
+  },
   methods: {
     has(q){
       switch(q){
+        case "admin":
+          return (!!this.user?.adm);
         case "user":
-          return true; //(this.user?.id > 0);
+          return (this.user?.id > 0);
       }
+    },
+    doimp(){
+      this.$router.replace({path: '/calendar', query: {imp: (new Date()).getTime()}});
     }
   }
 }
@@ -83,5 +116,8 @@ export default {
 .v-navigation-drawer{
   position: fixed;
   top: 64px !important;
+  & .wp-admin{
+    & .v-icon{color: $red-color;}
+  }
 }
 </style>

@@ -10,8 +10,7 @@ if (
 }
 
 export default async function( ctx ){
-      
-    const { app, env } = ctx;
+    const { app, env, store } = ctx;
     
     if (!app.mixins) {
         app.mixins = [];
@@ -41,6 +40,11 @@ export default async function( ctx ){
                      accurateTrackBounce:false
                 });
             }
+        },
+        mounted(){
+            (async ()=>{
+                await store.dispatch("data/user");
+            })();
         },
         methods: {
             /**

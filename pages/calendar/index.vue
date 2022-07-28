@@ -39,6 +39,7 @@
                 color="primary"
                 :events="events()"
                 :type="type"
+                v-on:click:date="viewDay"
                 v-on:click:event="edit"
                 v-on:change="change">
         <template v-slot:event="{ event }">
@@ -141,9 +142,14 @@ export default {
             all: null
         };
     },
-    computed: mapState({
-        period: state => state.period
-    }),
+    computed: {
+        imp(){
+            return this.$route.query.imp;
+        },
+        ...mapState({
+            period: state => state.period
+        })
+    },
     methods:{
         async _fetch(){
             console.log('fetch at period', this.period);
@@ -230,6 +236,29 @@ export default {
             const n = this.all.findIndex( a => a.ID === event.id );
             var item = n < 0 ? null : this.all[n];
             this.$refs[ (1==item.UF_RED) ? "dlgRed" : "dlgAct" ].open(item);
+        },
+        async doimp(){
+            const per = this.period;
+            try {
+                const res = await $nuxt.api("imp", {
+                    mn: per.start.get("month"),
+                    yr: per.start.get("year")
+                });
+                console.log('imp', res);
+            } catch(e){
+                console.log('ERR (imp)', e);
+            }
+        },
+        viewDay({ date }){
+            console.log('set dt', date);
+            this.value = date;
+            this.type = 'day';
+        }
+    },
+    watch: {
+        imp(val){
+            console.log('imp', val);
+            this.doimp();
         }
     }
 }
@@ -251,7 +280,7 @@ export default {
 .v-event, .v-event-timed {
     & .red-day{
         background: #fff;
-        color: #D50000;
+        color: $red-color
     }
 }
 .v-event-timed{
