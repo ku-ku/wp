@@ -77,11 +77,10 @@ export default async function( ctx ){
                 }
                 
                 if ("user" === q){
-                    opts.sync = true;
                     opts.async= false;
                 }
                 
-                // +period always
+                // +period always sending
                 const p = $nuxt.$store.getters['period'];
                 opts.data.params.period = {
                     start: p.start.toISOString(),

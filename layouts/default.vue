@@ -3,8 +3,8 @@
     <v-main>
       <wp-bar v-if="has('user')" 
               v-on:navi="navi = !navi"
-              v-on:action="$refs['dlgAct'].open()"
-              v-on:redday="$refs['dlgRed'].open()">
+              v-on:action="add('dlgAct')"
+              v-on:redday="add('dlgRed')">
       </wp-bar>
       <v-navigation-drawer v-model="navi" 
                            dark
@@ -65,8 +65,10 @@
         <Nuxt />
       </v-container>      
     </v-main>
-    <wp-dialog ref="dlgAct" :mode="DIA_MODES.action" />
-    <wp-dialog ref="dlgRed" :mode="DIA_MODES.reday" />
+    <wp-dialog v-if="dialog"
+               ref="dlgAct" :mode="DIA_MODES.action" />
+    <wp-dialog v-if="dialog"
+               ref="dlgRed" :mode="DIA_MODES.reday" />
   </v-app>
 </template>
 
@@ -86,7 +88,8 @@ export default {
   data(){
     return {
       DIA_MODES,
-      navi: null
+      navi: null,
+      dialog: false
     }
   },
   computed:  {
@@ -105,6 +108,12 @@ export default {
         case "user":
           return (this.user?.id > 0);
       }
+    },
+    add(q){
+      this.dialog = true;
+      this.$nextTick(()=>{
+        this.$refs[q].open({ID:-1});
+      });
     },
     doimp(){
       this.$router.replace({path: '/calendar', query: {imp: (new Date()).getTime()}});

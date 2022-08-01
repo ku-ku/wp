@@ -108,9 +108,11 @@
             </v-menu>
         </template>
     </v-calendar>
-    <wp-dialog ref="dlgAct" :mode="DIA_MODES.action" 
+    <wp-dialog v-if="dialog"
+               ref="dlgAct" :mode="DIA_MODES.action" 
                v-on:change="_fetch" />
-    <wp-dialog ref="dlgRed" :mode="DIA_MODES.reday" 
+    <wp-dialog v-if="dialog"
+               ref="dlgRed" :mode="DIA_MODES.reday" 
                v-on:change="_fetch" />
 </v-container>
 </template>
@@ -125,11 +127,16 @@ export default {
     fetchOnServer: false,
     middleware({ store }){
         //preload all dir`s
-        (async ()=>{
-            await store.dispatch("data/list", "divisions");
-            await store.dispatch("data/list", "employees");
-            await store.dispatch("data/list", "places");
-        })();
+        const _load = async q => {
+            try {
+                await store.dispatch("data/list", q);
+            } catch(e){
+                console.log('ERR (' + q + ')', e);
+            }
+        };
+        ["divisions", "employees", "places"].map( q => setTimeout(()=>{
+            _load(q);
+        }, 500));
     },
     data(){
         const _d = new Date();
@@ -139,7 +146,8 @@ export default {
             value: '',
             type: 'month',
             types: [{name: 'Месяц', id:'month'}, {name: 'Неделя', id:'week'}, {name:'День', id:'day'}],
-            all: null
+            all: null,
+            dialog: false
         };
     },
     computed: {
@@ -154,16 +162,21 @@ export default {
         async _fetch(){
             console.log('fetch at period', this.period);
             this.loading = true;
+            var acts = [], reds = [];
             try {
-                var all = await this.$store.dispatch("data/list", "acts");
-                this.all = all.concat(
-                                await this.$store.dispatch("data/list", "reds")
-                        );
+                acts = await this.$store.dispatch("data/list", "acts");
             } catch(e){
-                this.all = [];
                 console.log('ERR (calendar)', e);
                 $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
+            }
+
+            try {
+                reds = await this.$store.dispatch("data/list", "reds");
+            } catch(e){
+                console.log('ERR (calendar)', e);
+                $nuxt.msg({text: 'Ошибка получения праздничных дней'});
             } finally {
+                this.all = acts.concat( reds );
                 this.loading = false;
             }
         },
@@ -226,16 +239,25 @@ export default {
         },
         addAction(at){
             var item = {ID: -1, UF_ADT: at};
-            this.$refs.dlgAct.open(item);
+            this.dialog = true;
+            this.$nextTick(()=>{
+                this.$refs.dlgAct.open(item);
+            });
         },
         addRed(at){
             var item = {ID: -1, UF_ADT: at};
-            this.$refs.dlgRed.open(item);
+            this.dialog = true;
+            this.$nextTick(()=>{
+                this.$refs.dlgRed.open(item);
+            });
         },
         edit({ event }){
             const n = this.all.findIndex( a => a.ID === event.id );
             var item = n < 0 ? null : this.all[n];
-            this.$refs[ (1==item.UF_RED) ? "dlgRed" : "dlgAct" ].open(item);
+            this.dialog = true;
+            this.$nextTick(()=>{
+                this.$refs[ (1==item.UF_RED) ? "dlgRed" : "dlgAct" ].open(item);
+            });
         },
         async doimp(){
             const per = this.period;

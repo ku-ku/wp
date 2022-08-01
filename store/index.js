@@ -1,4 +1,5 @@
 import $moment from "moment";
+$moment.locale("ru");
 
 const _def_per = ()=>{
     const _d = new Date();

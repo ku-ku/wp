@@ -39,15 +39,24 @@ export default {
             search: null
         };
     },
-    created(){
+    mounted(){
         this.$store.dispatch("data/list", "employees");
         this.needs('title', 'Сотрудники');
         this.needs('searchable', true);
     },
     computed: {
         employees(){
-            if (empty(this.search)){
-                return this.$store.state.data.employees;
+            if ( empty(this.search) ){
+                return [...this.$store.state.data.employees]?.sort( (e1, e2) => {
+                        const n1 = this.selected.findIndex( e => e===e1.ID ),
+                              n2 = this.selected.findIndex( e => e===e2.ID );
+                        if (n1 > -1){
+                            return -1;
+                        } else if ( n2 > -1){
+                            return 1;
+                        }
+                        return e1.UF_EMPNAME.localeCompare(e2.UF_EMPNAME);
+                });
             } else {
                 const re = new RegExp('(' + this.search + ')+', 'gi');
                 return this.$store.state.data.employees?.filter( e => re.test(e.UF_EMPNAME));

@@ -14,7 +14,8 @@ export const state = ()=>({
     employees: null,
     places: null,
     acts: null,
-    reds: null
+    reds: null,
+    _prev: null     //see list action
 });
 
 export const mutations = {
@@ -72,31 +73,36 @@ export const actions = {
      */
     async user({state, commit}){
         return new Promise((resolve, reject)=>{
-            if (!!state.user){
+            if (state.user){
                 resolve(state.user);
             } else {
-                $nuxt.api("user").then(user => {
-                    commit("set", { user });
-                    resolve(user);
-                }).catch(e => {
-                    console.log('ERR (user)', e);
-                    reject(e);
-                })
+                (async () => {
+                    try {
+                        const user = await $nuxt.api("user");
+                        commit("set", { user });
+                        resolve(user);
+                    } catch(e) {
+                        console.log('ERR (user)', e);
+                        reject(e);
+                    }
+                })();
             }
         });
     },   //user
     async list({state, commit, rootGetters}, payload){
-        return new Promise((resolve, reject)=>{
+        console.log("list a: ", payload);
+        if (state._prev){
+            try {
+                await state._prev;
+            } catch(e){}
+        }
+
+        const _p = new Promise((resolve, reject)=>{
             const p = rootGetters["period"];
             if (!!state[payload]){
                 resolve(state[payload]);
             } else {
-                $nuxt.api(payload, {
-                    period: {
-                        start: p.start.toISOString(),
-                        end: p.start.toISOString()
-                    }
-                }).then(res => {
+                $nuxt.api(payload).then(res => {
                     const o = {};
                     o[payload] = res;
                     commit("set", o);
@@ -107,6 +113,15 @@ export const actions = {
                 });
             }
         });
+        _p.magic = payload;
+
+        _p.finally(()=>{ 
+            console.log('finally', _p.magic, _p);
+            commit("set", {_prev: null});
+        });
+
+        return _p;
+
     },   //list
     /**
      * Read one entity by ID
