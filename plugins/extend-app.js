@@ -42,9 +42,19 @@ export default async function( ctx ){
             }
         },
         mounted(){
-            (async ()=>{
-                await store.dispatch("data/user");
-            })();
+            var n = 0;
+            const _get = async()=>{
+                try {
+                    await store.dispatch("data/user");
+                } catch(e) {
+                   n++;
+                   if (n < 3){
+                       setTimeout(_get, 500);
+                   }
+                }
+            };
+            _get();
+            
         },
         methods: {
             /**
@@ -65,6 +75,12 @@ export default async function( ctx ){
                 } else {
                     opts.data.params = {};
                 }
+                
+                if ("user" === q){
+                    opts.sync = true;
+                    opts.async= false;
+                }
+                
                 // +period always
                 const p = $nuxt.$store.getters['period'];
                 opts.data.params.period = {

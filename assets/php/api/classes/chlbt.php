@@ -115,7 +115,7 @@ class CHLBTEntity extends CHLBT {
 }       //CHLBTEntity
 
 class CHLBTAdds extends CHLBTEntity{
-    private $q = 'USER'; /** USER | HDRS | EMPS */
+    private $q = 'USER'; /** USER | HDRS | EMPS | IMP_uuid */
     private $mainId;
     /**
      * @param {String} q USER | HEADS | EMPS
@@ -144,6 +144,17 @@ class CHLBTAdds extends CHLBTEntity{
         return $res;
     }
     
+    public function exists(){
+        $args = array(
+                        "select" => ["UF_MAIN"],
+                        "filter" => ['=UF_Q' => $this->q]
+        );
+        $res = parent::list($args);
+        
+        return count($res) > 0 ? $res["UF_MAIN"] : -1;
+        
+    }
+    
     /**
      * Deleting all by mainId
      * @return 
@@ -151,6 +162,13 @@ class CHLBTAdds extends CHLBTEntity{
     public function delAll(){
         global $DB;
         $res = $DB->Query(sprintf("delete from wpadds where UF_Q='%s' and UF_MAIN=%d", $this->q, $this->mainId));
+        return $res;
+    }
+    
+    public function add($link){
+        global $DB;
+        $arr = array("UF_Q" => "'" . $this->q . "'", "UF_MAIN" => $this->mainId, "UF_LINK" => $link);
+        $res = $DB->Insert("wpadds", $arr, "",  false /*debug*/, ""  /*exist_id*/, true /*ignore_errors*/);
         return $res;
     }
     

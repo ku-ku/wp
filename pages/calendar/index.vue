@@ -239,6 +239,7 @@ export default {
         },
         async doimp(){
             const per = this.period;
+            $nuxt.msg({text:'Иморт данных...', type:'primary'});
             try {
                 const res = await $nuxt.api("imp", {
                     mn: per.start.get("month"),
@@ -247,6 +248,9 @@ export default {
                 console.log('imp', res);
             } catch(e){
                 console.log('ERR (imp)', e);
+            } finally {
+                $nuxt.msg();
+                this.$router.replace({path: '/calendar'});
             }
         },
         viewDay({ date }){

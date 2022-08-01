@@ -6,6 +6,7 @@
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 require(__DIR__ . '/classes/chlbt.php');
+require(__DIR__ . '/classes/import.php');
 
 define("WP_GROUP", "WP_PLANNING");
 
@@ -538,11 +539,11 @@ function places(){
 }   //places
 
 function imp($params){
-    $api = 'http://localhost:8060/zdyn/ap';
-    $params["format"] = "json";
-    $url = new \Bitrix\Main\Web\Uri($api);
-    $url->addParams($params);
-    $res = json_decode(\App\Helpers\CurlHelper::sendRequest('GET', $url->getUri())["body"]);
+    $imp = new WpImport($params["mn"], $params["yr"]);
+    $res = array(
+        "acts" => count($imp->doPlan()),
+        "reds" => count($imp->doReds())
+    );
     return $res;
 }   //imp...
 
