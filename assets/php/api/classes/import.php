@@ -176,7 +176,8 @@ class WpImport  {
         );
         $res = $entity->save($item);
         $empId = $res["ID"];
-        $adds = new CHLBTAdds("EMP_" . $uid, $empId);
+        
+        $adds->set("main", $empId);
         $adds->add($empId);
         
         return $empId;
@@ -224,9 +225,9 @@ class WpImport  {
                 foreach($p->adds as $a){
                     $empId = $this->emp_by_id($a->empid);
                     if ($a->attr==0){
-                        $heads[] = $empId;
-                    } else {
                         $emps[] = $empId;
+                    } else {
+                        $heads[] = $empId;
                     }
                 }
                 if ( count($heads)>0 ){

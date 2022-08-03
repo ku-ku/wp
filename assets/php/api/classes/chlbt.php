@@ -145,14 +145,14 @@ class CHLBTAdds extends CHLBTEntity{
     }
     
     public function exists(){
-        $args = array(
-                        "select" => ["UF_MAIN"],
-                        "filter" => ['=UF_Q' => $this->q]
-        );
-        $res = parent::list($args);
-        
-        return count($res) > 0 ? $res["UF_MAIN"] : -1;
-        
+        global $DB;
+        $rs = $DB->Query(sprintf("select UF_MAIN from wpadds where UF_Q='%s'", $this->q));
+        if( $el = $rs->fetch() ){
+            $res = $el['UF_MAIN'];
+        } else {
+            $res = -1;
+        }
+        return $res;
     }
     
     /**
@@ -165,12 +165,25 @@ class CHLBTAdds extends CHLBTEntity{
         return $res;
     }
     
+     
+    public function set($that, $val){
+        switch($that){
+            case "q":
+                $this->q = $val;
+                break;
+            case "main":
+                $this->mainId = $val;
+                break;
+        }
+    }
+    
     public function add($link){
         global $DB;
         $arr = array("UF_Q" => "'" . $this->q . "'", "UF_MAIN" => $this->mainId, "UF_LINK" => $link);
         $res = $DB->Insert("wpadds", $arr, "",  false /*debug*/, ""  /*exist_id*/, true /*ignore_errors*/);
+        
         return $res;
-    }
+    }   //add
     
     public function addAll($links){
         global $DB;

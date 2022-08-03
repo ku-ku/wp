@@ -4,8 +4,7 @@
         <v-btn icon
             class="ma-2"
             @click="$refs.calendar.prev()">
-            <v-icon v-if="loading">mdi-sync mdi-spin</v-icon>
-            <v-icon v-else>mdi-chevron-left</v-icon>
+            <v-icon>mdi-chevron-left</v-icon>
         </v-btn>
         <v-btn outlined dark color="secondary lighten-3"
                style="min-width: 8rem"
@@ -21,9 +20,15 @@
             dense
             outlined
             hide-details
-            class="ma-2"
-            label="Вид">
+            class="mx-2"
+            label="Вид"
+            style="max-width:14rem;">
         </v-select>
+        <v-btn color="secondary lighten-3"
+               icon
+               v-on:click="_fetch()">
+            <v-icon v-bind:class="{'mdi-spin': loading}">mdi-refresh</v-icon>
+        </v-btn>
         <v-spacer></v-spacer>
         <v-btn
             icon
@@ -57,32 +62,17 @@
             </v-tooltip>    
         </template>
         <template v-slot:interval="{date, time}">
-            <v-menu dark offset-y color="primary">
-                <template v-slot:activator="{ on, attrs }">
-                    <v-btn v-on="on"
-                           x-small 
-                           elevation="0"
-                           fab
-                           right
-                           absolute
-                           v-bind="attrs">
-                           <v-icon small>mdi-plus</v-icon>
-                    </v-btn>
-                </template>
-                <v-list dense>
-                    <v-list-item v-on:click="addAction(date+'T'+time)">
-                        <v-list-item-icon><v-icon small>mdi-bank-plus</v-icon></v-list-item-icon>
-                        <v-list-item-title>Добавить мероприятие...</v-list-item-title>
-                    </v-list-item>
-                    <v-divider />
-                    <v-list-item v-on:click="addRed(date)">
-                        <v-list-item-icon><v-icon small>mdi-calendar-plus</v-icon></v-list-item-icon>
-                        <v-list-item-title>Добавить праздничный день...</v-list-item-title>
-                    </v-list-item>
-                </v-list>
-            </v-menu>
+            <v-btn x-small 
+                   elevation="0"
+                   color="white"
+                   fab
+                   right
+                   absolute
+                   v-on:click="addAction(date+'T'+time)">
+                   <v-icon small>mdi-plus</v-icon>
+            </v-btn>
         </template>
-        <template v-slot:day="{ past, date }">
+        <template v-slot:day="{ date }">
             <v-menu dark offset-y color="primary">
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn v-on="on"
@@ -119,25 +109,13 @@
 <script>
 import { mapState } from 'vuex';
 import $moment from "moment";
+$moment.locale('ru');
 import { DIA_MODES } from "~/utils";
 
 
 export default {
     name: 'WpCalendar',
     fetchOnServer: false,
-    middleware({ store }){
-        //preload all dir`s
-        const _load = async q => {
-            try {
-                await store.dispatch("data/list", q);
-            } catch(e){
-                console.log('ERR (' + q + ')', e);
-            }
-        };
-        ["divisions", "employees", "places"].map( q => setTimeout(()=>{
-            _load(q);
-        }, 500));
-    },
     data(){
         const _d = new Date();
         return {
@@ -169,7 +147,7 @@ export default {
                 console.log('ERR (calendar)', e);
                 $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
             }
-
+            
             try {
                 reds = await this.$store.dispatch("data/list", "reds");
             } catch(e){
@@ -178,7 +156,7 @@ export default {
             } finally {
                 this.all = acts.concat( reds );
                 this.loading = false;
-            }
+            };
         },
         get(q, v){
             switch(q){
@@ -238,7 +216,8 @@ export default {
             }
         },
         addAction(at){
-            var item = {ID: -1, UF_ADT: at};
+            
+            var item = {ID: -1, UF_ADT: $moment(at).toDate()};
             this.dialog = true;
             this.$nextTick(()=>{
                 this.$refs.dlgAct.open(item);
@@ -260,19 +239,26 @@ export default {
             });
         },
         async doimp(){
+            if (this.loading){
+                return false;
+            }
             const per = this.period;
+            console.log('import at', per.start);
             $nuxt.msg({text:'Иморт данных...', type:'primary'});
+            this.loading = true;
             try {
                 const res = await $nuxt.api("imp", {
-                    mn: per.start.get("month"),
+                    mn: per.start.get("month") + 1,
                     yr: per.start.get("year")
                 });
                 console.log('imp', res);
+                this._fetch();
             } catch(e){
                 console.log('ERR (imp)', e);
             } finally {
+                this.loading = false;
                 $nuxt.msg();
-                this.$router.replace({path: '/calendar'});
+                this.$router.replace({name: 'calendar', query:{}});
             }
         },
         viewDay({ date }){
@@ -284,7 +270,9 @@ export default {
     watch: {
         imp(val){
             console.log('imp', val);
-            this.doimp();
+            if (!!val){
+                this.doimp();
+            }
         }
     }
 }

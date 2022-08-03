@@ -89,16 +89,8 @@ export const actions = {
             }
         });
     },   //user
-    async list({state, commit, rootGetters}, payload){
-        console.log("list a: ", payload);
-        if (state._prev){
-            try {
-                await state._prev;
-            } catch(e){}
-        }
-
-        const _p = new Promise((resolve, reject)=>{
-            const p = rootGetters["period"];
+    async list({state, commit}, payload){
+        return new Promise((resolve, reject) => {
             if (!!state[payload]){
                 resolve(state[payload]);
             } else {
@@ -113,15 +105,6 @@ export const actions = {
                 });
             }
         });
-        _p.magic = payload;
-
-        _p.finally(()=>{ 
-            console.log('finally', _p.magic, _p);
-            commit("set", {_prev: null});
-        });
-
-        return _p;
-
     },   //list
     /**
      * Read one entity by ID

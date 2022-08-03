@@ -14,8 +14,8 @@
                 <v-list-item-content class="flex-column align-start">
                     {{emp.UF_EMPNAME}}
                     <v-row class="emp-meta">
-                        <v-col cols="auto">{{emp.DVS_NAME}}</v-col>
-                        <v-col>{{emp.STAFF_NAME}}</v-col>
+                        <v-col cols="8">{{emp.DVS_NAME}}</v-col>
+                        <v-col cols="4" class="text-truncate">{{emp.STAFF_NAME}}</v-col>
                     </v-row>
                 </v-list-item-content>
             </v-list-item>
@@ -47,7 +47,7 @@ export default {
     computed: {
         employees(){
             if ( empty(this.search) ){
-                return [...this.$store.state.data.employees]?.sort( (e1, e2) => {
+                return [...this.$store.state.data.employees || []].sort( (e1, e2) => {
                         const n1 = this.selected.findIndex( e => e===e1.ID ),
                               n2 = this.selected.findIndex( e => e===e2.ID );
                         if (n1 > -1){
@@ -93,10 +93,12 @@ export default {
                 align-self: center;
             }
             & .emp-meta{
+                flex: 1 1 100%;
+                width: 100%;
                 font-size: 0.75rem;
                 color: var(--v-secondary-base);
             }
         }
     }
 }
-</style>    
+</style>

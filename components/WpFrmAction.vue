@@ -115,6 +115,10 @@
                             Дополнительно...
                         </v-badge>
                     </v-btn>
+                    <div class="sub text-truncate"
+                         v-if="get('HEADS')">
+                        {{get('HEAD-NAMES')}}
+                    </div>
                 </v-col>
                 <v-col cols="6">
                     <v-btn small 
@@ -127,6 +131,10 @@
                            Ответственные за подготовку...
                         </v-badge>
                     </v-btn>
+                    <div class="sub text-truncate"
+                         v-if="get('EMPS')">
+                        {{get('EMP-NAMES')}}
+                    </div>
                 </v-col>
             </v-row>
         </v-col>
@@ -199,21 +207,21 @@ export default {
     },
     beforeCreate(){
         /** preload's */
-        (async ()=>{
-            try {
-                await $nuxt.$store.dispatch("data/list", "divisions");
-                await $nuxt.$store.dispatch("data/list", "employees");
-                await $nuxt.$store.dispatch("data/list", "places");
-            } catch(e){
-                console.log('ERR (action dirs)', e);
-            }
-        })();
+        const store = $nuxt.$store;
+        store.dispatch("data/list", "divisions").then(()=>{
+            setTimeout(()=>{
+                store.dispatch("data/list", "employees").then(()=>{
+                    setTimeout(()=>{
+                        store.dispatch("data/list", "places");
+                    }, 300);
+                })
+            }, 300);
+        });
     },
     async fetch(){
         const ID = this.item?.ID || -1;
-        console.log("fetching act #", ID);
         if ( ID > 0 ){
-            const resp = await $nuxt.api("acts", { ID }); //full read data
+            const resp = await $nuxt.api("acts", { ID }); //full read data by ID
             this.item = Array.isArray(resp) ? resp[0] : {};
             this.item.UF_STATUS = Number(this.item.UF_STATUS);
         }
@@ -249,10 +257,10 @@ export default {
     }),
     methods: {
         use(item){
-            this.item = {ID: item.ID};
-            if (this.item.ID < 1){
-                this.item.UF_ADT = (new Date()).getTime();
-            }
+            this.item = {
+                ID: item.ID,
+                UF_ADT: item.UF_ADT || new Date()
+            };
             this.$fetch();
             //this.$fetch();
         },
@@ -261,9 +269,9 @@ export default {
          * @param {string} q HEADS | EMPS for list
          */
         adds(q){
-            this.meta_key = q;
             //get choose dlg
-            const arr = this.item[q]
+            this.meta_key = q;
+            const arr = this.item[q];
             this.$refs["dlg"].open(arr);
         },
         onadds(e){
@@ -285,6 +293,21 @@ export default {
                     return (this.item.hasOwnProperty(q)) 
                                 ? this.item[q]?.length
                                 : null;
+                case "HEAD-NAMES":
+                case "EMP-NAMES":
+                    var names = [];
+                    this.item[(q==="HEAD-NAMES") ? "HEADS" : "EMPS"]?.map( id => {
+                        const n = this.employees.findIndex( e => (e.ID === id) );
+                        if ( n > -1){
+                            var s = this.employees[n].UF_EMPNAME;
+                            var a = s.split(/\s+/g);
+                            if (a.length > 2){
+                                s = `${a[0]} ${a[1].substr(0, 1)}.${a[2].substr(0, 1)}.`;
+                            }
+                            names.push(s);
+                        }
+                    });
+                    return names.join(', ');
             }
             return false;
         },
@@ -293,7 +316,10 @@ export default {
                 return true;
             }
             const re = new RegExp('(' + s + ')+', 'gi');
-            return re.test(item.hasOwnProperty("LAST_NAME") ? item.LAST_NAME : item.UF_NAME);
+            return (
+                            re.test(item.hasOwnProperty("LAST_NAME") ? item.LAST_NAME : item.UF_NAME) 
+                        || ( item.hasOwnProperty("UF_CODE") && re.test(item.UF_CODE) )
+                    );
         },
         validate(){
             const _RQS = ["UF_ADT", "UF_DVS", "UF_TEXT", "UF_PLACE", "UF_CHIEF"],
@@ -324,6 +350,9 @@ export default {
 </script>
 <style lang="scss">
     form.wp-action{
+        & textarea {
+            line-height: 1.25;
+        }
         & .wp-action__meta{
             & .col{
                 display: flex;
@@ -341,6 +370,10 @@ export default {
                     display: none;
                 }
             }
+        }
+        & .sub{
+            color: var(--v-secondary-base);
+            font-size: 0.75rem;
         }
     }        
 </style>

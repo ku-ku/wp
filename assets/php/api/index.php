@@ -3,6 +3,9 @@
  * API realization for Work-plan
  * 
  */
+if (!defined('PUBLIC_AJAX_MODE')) {
+    define('PUBLIC_AJAX_MODE', true);
+}
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 require(__DIR__ . '/classes/chlbt.php');
@@ -71,10 +74,7 @@ if (
 }
 
 function user(){
-    if (!defined('PUBLIC_AJAX_MODE')) {
-        define('PUBLIC_AJAX_MODE', true);
-    }
-    
+  
     global $USER;
 
     $USER->Authorize(10); 
