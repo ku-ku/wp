@@ -9,6 +9,8 @@ if (
     window["$"] = require("jquery");
 }
 
+
+
 export default async function( ctx ){
     const { app, env, store } = ctx;
     
@@ -19,7 +21,8 @@ export default async function( ctx ){
     /**
      * for snack-bar messages (see methods.msg -> $nuxt.msg)
      */
-    var appMsg = null;
+    var appMsg = null,
+        worker = null;
     
     var conte = $(".page-content");
     if ( conte.length > 0 ){        //attache root to bx-conte
@@ -40,12 +43,26 @@ export default async function( ctx ){
                      accurateTrackBounce:false
                 });
             }
+            worker = new Worker("ws.js");
+            worker.onmessage = ({data}) => {
+                if (
+                        (data.success)
+                     && (data.type==="read")
+                    ) {
+                    store.commit("data/set", data);
+                }
+            };
+            worker.postMessage({type:"init"});
         },
         mounted(){
             var n = 0;
             const _get = async()=>{
                 try {
                     await store.dispatch("data/user");
+                    const u = store.state.data.user;
+                    if (u.haswp){
+                        setTimeout(() => worker.postMessage({type:"read"}), 500);
+                    }
                 } catch(e) {
                    n++;
                    if (n < 3){
@@ -54,7 +71,13 @@ export default async function( ctx ){
                 }
             };
             _get();
-            
+        },
+        beforeDestroy(){
+            try {
+                if (!!worker){
+                    worker.terminate();
+                }
+            } catch(e){}
         },
         methods: {
             /**
@@ -106,6 +129,11 @@ export default async function( ctx ){
                     appMsg = c.$refs["app-msg"];
                 }
                 return appMsg.show(msg);
+            },
+            cache(data){
+                if (!!worker){
+                    worker.postMessage({type:"save", data});
+                }
             }
         }       //methods
     });

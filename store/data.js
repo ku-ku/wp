@@ -1,5 +1,6 @@
 import { empty } from "~/utils";
 
+const DIR_KEYS = ["divisions", "staffing", "employees", "places"];
 const A_STATUSES = [
     {ID: 1, name: 'ПРОВЕДЕНО'},
     {ID: 2, name: 'Перенесено'},
@@ -98,6 +99,11 @@ export const actions = {
                     const o = {};
                     o[payload] = res;
                     commit("set", o);
+                    //saving dir`s for feature using
+                    const n = DIR_KEYS.findIndex( k => k === payload );
+                    if ( n > -1 ){
+                        $nuxt.cache(o);
+                    }
                     resolve(res);
                 }).catch(e => {
                     console.log('ERR (data)', e);
