@@ -48,7 +48,7 @@
         <v-col cols="4">
             <v-checkbox
                 v-model="item.UF_DAYATTR"
-                label="В течении дня"
+                label="В течение дня"
                 value="1"
                 color="primary"
                 hide-details>
@@ -66,7 +66,7 @@
     </v-row>
     <v-row>
         <v-col cols="12">
-            <v-textarea label="Мероприятие" rows="2"
+            <v-textarea label="Мероприятие" rows="3"
                         v-model="item.UF_TEXT"
                         :error="errs.UF_TEXT"></v-textarea>
         </v-col>
@@ -197,6 +197,24 @@ import { mxForm } from '~/utils/mxForm.js';
 import { DIA_MODES, empty } from "~/utils/";
 import { mapState } from 'vuex';
 
+const DEF_ITEM = {
+    ID: -1,
+    UF_RED: 0,
+    UF_ADT: null,
+    UF_DVS: null,
+    UF_GRATTR: 0,
+    UF_DAYATTR: 0,
+    UF_SPECATTR: 0,
+    UF_WWWATTR: 0,
+    UF_TEXT: null,
+    UF_PLACE: null,
+    UF_CHIEF: null,
+    UF_STATUS: null,
+    UF_COMMENTS: null    
+};
+
+const FIX_ITEM = Object.assign(DEF_ITEM, {fixed: false});
+
 
 export default {
     name: "WpFrmAction",
@@ -218,34 +236,12 @@ export default {
             }, 300);
         });
     },
-    async fetch(){
-        const ID = this.item?.ID || -1;
-        if ( ID > 0 ){
-            const resp = await $nuxt.api("acts", { ID }); //full read data by ID
-            this.item = Array.isArray(resp) ? resp[0] : {};
-            this.item.UF_STATUS = Number(this.item.UF_STATUS);
-        }
-    },
     data(){
         return {
             DIA_MODES,
             error: null,
             meta_key: 'HEADS',        //UF_META key: headers(HEADS) | responsibles(EMPS): see adds()
-            item: {
-                ID: -1,
-                UF_RED: 0,
-                UF_ADT: null,
-                UF_DVS: null,
-                UF_GRATTR: 0,
-                UF_DAYATTR: 0,
-                UF_SPECATTR: 0,
-                UF_WWWATTR: 0,
-                UF_TEXT: null,
-                UF_PLACE: null,
-                UF_CHIEF: null,
-                UF_STATUS: null,
-                UF_COMMENTS: null
-            },
+            item: DEF_ITEM,
             errs: {}
         };
     },
@@ -256,13 +252,30 @@ export default {
         places:    state => state.data.places
     }),
     methods: {
-        use(item){
+        async use(item){
+            this.errs = {};
             this.item = {
-                ID: item.ID,
-                UF_ADT: item.UF_ADT || new Date()
+                ID: item.ID || -1
             };
-            this.$fetch();
-            //this.$fetch();
+            if ( this.item.ID > 0 ){
+                const resp = await $nuxt.api("acts", { ID: this.item.ID }); //full read data by ID
+                this.item = Array.isArray(resp) ? resp[0] : {};
+                this.item.UF_STATUS = Number(this.item.UF_STATUS);
+            } else {
+                if (!item.UF_ADT){
+                    item.UF_ADT = new Date();
+                }
+                //restore saved value`s
+                if (FIX_ITEM.fixed){
+                    item.UF_DVS  = FIX_ITEM.UF_DVS;
+                    item.UF_TEXT = FIX_ITEM.UF_TEXT;
+                    item.UF_PLACE= FIX_ITEM.UF_PLACE;
+                    item.UF_CHIEF= FIX_ITEM.UF_CHIEF;
+                    item.UF_STATUS=FIX_ITEM.UF_STATUS;
+                    item.EMPS    = FIX_ITEM.EMPS;
+                }
+                this.item = item;
+            }
         },
         /**
          * Call add's choose dlg
@@ -281,6 +294,9 @@ export default {
         set(q, val){
             console.log(`change ${q}`, val);
             switch(q){
+                case "fix":
+                    FIX_ITEM.fixed = !FIX_ITEM.fixed;
+                    return FIX_ITEM.fixed;
                 default:
                     this.item[q] = val;
                     break;
@@ -339,6 +355,11 @@ export default {
                 this.item.UF_ADT = $moment(this.item.UF_ADT).toDate();
                 await this.$store.dispatch("data/upd", {acts: this.item});
                 this.$emit("success", this.item);
+                if (FIX_ITEM.fixed){
+                    Object.keys(this.item).map( k => {
+                        FIX_ITEM[k] = this.item[k];
+                    });
+                }
             } catch(e){
                 this.$emit("error", e);
             }

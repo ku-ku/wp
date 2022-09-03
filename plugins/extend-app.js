@@ -43,7 +43,7 @@ export default async function( ctx ){
                      accurateTrackBounce:false
                 });
             }
-            worker = new Worker("ws.js");
+            worker = new Worker( ctx.isDev ? "ws.js" : '/wp/app/ws.js' );
             worker.onmessage = ({data}) => {
                 if (
                         (data.success)
@@ -52,7 +52,7 @@ export default async function( ctx ){
                     store.commit("data/set", data);
                 }
             };
-            worker.postMessage({type:"init"});
+            worker.postMessage({type:"init", env});
         },
         mounted(){
             var n = 0;

@@ -95,7 +95,6 @@ export default {
         value: {
             immediate: true, 
             handler(val) {
-                console.log('set date', val);
                 this.valid = true;
                 if ( empty(val) ){
                     this.text = null;

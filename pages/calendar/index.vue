@@ -137,26 +137,28 @@ export default {
         })
     },
     methods:{
-        async _fetch(){
-            console.log('fetch at period', this.period);
+        _fetch(){
             this.loading = true;
-            var acts = [], reds = [];
-            try {
-                acts = await this.$store.dispatch("data/list", "acts");
-            } catch(e){
-                console.log('ERR (calendar)', e);
-                $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
-            }
+            var acts = [];
             
-            try {
-                reds = await this.$store.dispatch("data/list", "reds");
-            } catch(e){
-                console.log('ERR (calendar)', e);
-                $nuxt.msg({text: 'Ошибка получения праздничных дней'});
-            } finally {
-                this.all = acts.concat( reds );
-                this.loading = false;
-            };
+            const _get = async q => {
+                try {
+                    const a = await this.$store.dispatch("data/list", q);
+                    acts = acts.concat(a);
+                } catch(e){
+                    console.log('ERR (calendar)', e);
+                    $nuxt.msg({text: 'Ошибка получения списка мероприятий'});
+                } finally {
+                    if ("acts" === q){
+                        setTimeout(()=>{_get("reds");}, 300);
+                    } else {
+                        this.all = acts;
+                        this.loading = false;
+                    }
+                }
+            };  //_get
+            
+            _get("acts");
         },
         get(q, v){
             switch(q){
@@ -179,7 +181,6 @@ export default {
             this.$nextTick(()=> this.value='');
         },
         change({start, end}){
-            console.log('change period', start, end);
             this.$store.commit("set", { period: {
                                             start: [start.year, start.month-1, start.day],
                                             end: [end.year, end.month-1, end.day, 23, 59, 59]
@@ -208,6 +209,8 @@ export default {
                     e.title = e.name;
                     if ("00:00" !== tm){
                         e.title += `<div class="time">${ tm }</div>`;
+                    } else if (!e.red) {
+                        e.start = $moment(a.UF_ADT).add(9, 'hours').format(_FMT);
                     }
                     return e;
                 });

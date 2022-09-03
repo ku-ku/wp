@@ -1,11 +1,15 @@
 const KEYS = ["divisions", "staffing", "employees", "places"];
 
 let dbPromise = null;
+let env = null;  //env-context
 
 onmessage = function(e){
-    switch (e.data.type) {    
+    switch (e.data.type) {
         case "init":
+            env = e.data.env;
+            env.hTimer = setInterval(_ping, 5*60*1000);
             idbOpen();
+            setTimeout(actualizze, 1000);
             break;
         case "read":
             readData();
@@ -15,6 +19,16 @@ onmessage = function(e){
             break;
     }
 };  //onmessage
+
+
+const _ping = ()=>{
+    fetch(`${env.apiUrl}?q=ping`)
+            .then( r => {})
+            .catch( e => {
+                console.log('ERR (ping)', e);
+                postMessage( {success:false, type:"lost"} );
+            });
+};
 
 const idbOpen = ()=>{
     var db = null;
@@ -73,7 +87,6 @@ const readData = async ()=>{
 
 
 const idbSave = async e => {
-    console.log('WK (saving)', e);
     if (!dbPromise) {
         console.log('WK (saving): no database');
         return;
@@ -113,3 +126,36 @@ const idbSave = async e => {
         }
     });
 };  //idbSave
+
+const actualizze = () => {
+    var errs = 0, n = 0,
+    _load = ()=>{
+        if ( n > KEYS.length -1 ){
+            return;
+        }
+        
+        const that = KEYS[ n ];
+        
+        fetch(`${ env.apiUrl }?q=${ that }`)
+                .then( r => r.json() )
+                .then( async res => {
+                            const o = {};
+                            o[that] = res;
+                            await idbSave( o );
+                            o.success = true;
+                            o.type = "read";
+                            postMessage( o );
+                            n++;
+                            setTimeout(_load, 500);
+                })
+                .catch( e => {
+                    console.log('ERR (actz)', e);
+                    errs++;
+                    if (errs < 10){
+                        setTimeout(_load, 1000);
+                    }
+                });
+    };
+    
+    _load();
+};  //reloadCache

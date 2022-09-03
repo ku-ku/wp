@@ -25,15 +25,31 @@
                 </component>
             </v-card-text>
             <v-card-actions>
-                    <v-btn small tile color="primary"
-                           :loading="loading"
-                           v-on:click="save">
-                        <v-icon small>mdi-file-send-outline</v-icon>сохранить
-                    </v-btn>
-                    <v-btn small tile outlined color="secondary"
-                           v-on:click="show = false">
-                        <v-icon small>mdi-close</v-icon>закрыть
-                    </v-btn>
+                <v-tooltip left>
+                    <template v-slot:activator="{ on, attrs }">
+                        <v-btn small tile 
+                               color="primary"
+                               :outlined="!fixed"
+                               v-bind="attrs"
+                               v-on="on"
+                               @click="fix"
+                               v-show="mode===DIA_MODES.action">
+                            <v-icon small>{{fixed ? 'mdi-lock-check' : 'mdi-lock-open-outline'}}</v-icon>
+                        </v-btn>
+                    </template>
+                    <span>Закрепить значения</span>
+                </v-tooltip>
+                <v-btn small tile color="primary"
+                       :loading="loading"
+                       v-on:click="save"
+                       class="mx-3">
+                    <v-icon small>mdi-file-send-outline</v-icon>сохранить
+                </v-btn>
+                <v-btn small tile outlined color="secondary"
+                       :depressed="fixed"
+                       v-on:click="show = false">
+                    <v-icon small>mdi-close</v-icon>закрыть
+                </v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -84,6 +100,7 @@ export default {
             DIA_MODES,
             show: false,
             fAdd: false,
+            fixed: false,
             needs: {
                 searchable: false,
                 title: undefined
@@ -133,9 +150,9 @@ export default {
         open(item){
             var item = (!!item) ? item : {ID: -1};
             const f = this.$refs["form"];
+            this.show = (new Date()).getTime();
             f.use(item);
             this.fAdd = f.has('add');
-            this.show = (new Date()).getTime();
         },
         save(){
             const f = this.$refs["form"];
@@ -149,6 +166,9 @@ export default {
         },
         onsearch(s){
             this.$refs["form"].set('search', s);
+        },
+        fix(){
+            this.fixed = this.$refs["form"].set('fix');
         }
     }
 }

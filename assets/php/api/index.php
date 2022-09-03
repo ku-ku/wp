@@ -47,6 +47,9 @@ switch ($q){
     case "imp":
         $data = imp( $params );
         break;
+    case "ping":
+        $data = array("pong" => (new DateTime())->getTimestamp() );
+        break;
     default:
         $valid = false;
 }   //switch ($q...
@@ -521,7 +524,7 @@ function reds($params = false){
                         }
                     }
             }
-            $res[] = $el;            
+            $res[] = $el;
         }
     }
     
