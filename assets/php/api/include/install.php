@@ -1,5 +1,6 @@
 <?php
 /**
+ *  Creating Entity & others to work plan
  *  see /bitrix/admin/highloadblock_entity_edit.php
  *  (info at: https://mattweb.ru/moj-blog/bitriks/item/185-sozdanie-hl-bloka-s-pomoshchyu-api-bitrix)
  */
@@ -83,17 +84,23 @@ function fieldIds($table, $field){
     return $res;
 }   //fieldIds
 
-function install(){
-    /**
-     * User group
-     */
-    $groupId = "WP_PLANNING";
+function has_group($groupId){
     $f = "ID";
     $sort = "ASC";
     $filter = array("STRING_ID"=>$groupId);
     $res = CGroup::GetList($f, $sort, $filter);
 
-    if ( $res->SelectedRowsCount() < 1) {
+    return ($res->SelectedRowsCount() > 0);
+    
+}
+
+
+function install(){
+    /**
+     * User group
+     */
+    $groupId = "WP_PLANNING";
+    if ( !has_group($groupId) ) {
         $group = new CGroup();
 
         $arFields = Array(
@@ -105,10 +112,24 @@ function install(){
         );
         $groupId = $group->Add($arFields);
         echo 'Group ' . $groupId . ' added: ' . $group->LAST_ERROR . PHP_EOL;
-    } else {
-        echo 'Group ' . $groupId . ' exists' . PHP_EOL;
     }
+    
+    $groupId = "WP_PLANNINGMOD";
+    if ( !has_group($groupId) ) {
+        $group = new CGroup();
 
+        $arFields = Array(
+            "ACTIVE"       => "Y",
+            "C_SORT"       => 556,
+            "NAME"         => "Модерация мероприятий",
+            "DESCRIPTION"  => "Модерация плана мероприятий",
+            "STRING_ID"    => $groupId 
+        );
+        $groupId = $group->Add($arFields);
+        echo 'Group ' . $groupId  . ' added: ' . $group->LAST_ERROR . PHP_EOL;
+    }
+    
+    
     /**
      * HLBT: Staffing
      */

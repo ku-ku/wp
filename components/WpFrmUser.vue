@@ -68,6 +68,13 @@
                 color="primary"
                 hide-details>
             </v-checkbox>
+            <v-checkbox
+                v-model="item.WP_MODER"
+                label="Модератор плана"
+                value="Y"
+                color="primary"
+                hide-details>
+            </v-checkbox>
         </v-col>
         <v-col cols="4">
             <v-checkbox

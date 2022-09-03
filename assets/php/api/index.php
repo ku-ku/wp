@@ -11,7 +11,8 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.ph
 require(__DIR__ . '/classes/chlbt.php');
 require(__DIR__ . '/classes/import.php');
 
-define("WP_GROUP", "WP_PLANNING");
+define("WP_GROUP",  "WP_PLANNING");
+define("WP_GROUPMOD", "WP_PLANNINGMOD");
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
@@ -83,24 +84,32 @@ function user(){
     $USER->Authorize(10); 
 
     if ( $USER->IsAuthorized() ){
-        //Check group 
-        $f = "ID";
-        $sort = "ASC";
-        $filter = array("STRING_ID" => WP_GROUP);
-        $group = CGroup::GetList($f, $sort, $filter)->fetch();
-        $planningGroupId = (!!$group) ? $group["ID"] : -1;
         
         $res = array(
             "id"    => $USER->GetID(),
             "name"  => $USER->GetFullName(),
             "adm"   => $USER->IsAdmin(),
-            "haswp" => $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray()),
             "login" => $USER->GetLogin()
         );
         if ( $res["haswp"] ){
             $adds = new CHLBTAdds("USER", $USER->GetID());
             $res["DVSS"] = $adds->list(); 
         }
+        
+        //Check group`s
+        $f = "ID";
+        $sort = "ASC";
+        $filter = array("STRING_ID" => WP_GROUP);
+        $group = CGroup::GetList($f, $sort, $filter)->fetch();
+        $planningGroupId = (!!$group) ? $group["ID"] : -1;
+        $res["haswp"] = $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray());
+        
+        $filter = array("STRING_ID" => WP_GROUPM);
+        $group = CGroup::GetList($f, $sort, $filter)->fetch();
+        $planningGroupId = (!!$group) ? $group["ID"] : -1;
+        $res["hasmod"] = $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray());
+        
+        
         return $res;
     }
     return array( "id" => -1 );
@@ -143,6 +152,10 @@ function users($params = false){
     $group = CGroup::GetList($f, $sort, $filter)->fetch();
     $planningGroupId = (!!$group) ? $group["ID"] : -1;
     
+    $filter = array("STRING_ID" => WP_GROUPMOD);
+    $group = CGroup::GetList($f, $sort, $filter)->fetch();
+    $modGroupId = (!!$group) ? $group["ID"] : -1;
+    
     if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
@@ -156,6 +169,16 @@ function users($params = false){
                         unset($groups[$n]);
                     }
                 }
+                if (!!$item["WP_MODER"]){
+                    $groups[] = $modGroupId;
+                } else {
+                    $n = array_search($modGroupId, $groups);
+                    if ($n !== false){
+                        unset($groups[$n]);
+                    }
+                }
+                
+                
                 $item["GROUP_ID"] = $groups;
                 if ( intval($item["ID"]) < 1 ){
                     $item["PASSWORD"] = "12345678";
