@@ -2,37 +2,37 @@
 <v-container>
   <v-list class="wp">
     <v-list-item v-for="d in dates"
-                 class="mt-5"
+                 class="mt-3"
                  v-bind:class="{'current': now.isSame(d, 'day')}"
                  :data-item-at="d.toISOString()"
                  :key="'dt-' + d.toISOString()">
-      <v-row>
-        <v-col cols="auto" class="wp-dt" v-html="get('dt', d)"></v-col>
-        <v-col>
-          <ul class="red-days" v-if="get('reds', d).length > 0">
-            <li v-for="r in get('reds', d)"
-                :key="'red-' + r.ID">
-                {{r.UF_TEXT}}
-            </li>
-          </ul>
-          <v-row v-for="a in get('acts', d)"
-                :key="'act-' + a.ID">
-            <v-col cols="12" class="wp-action">
-              {{a.UF_TEXT}}
-              <div class="wp-action__meta">
-                <span class="time" v-if="'00:00'!==a.at.format('HH:mm')">
-                  <v-icon small>mdi-clock-outline</v-icon>
-                  {{a.at.format('HH:mm')}}
-                </span>
-                <span class="loca" v-if="!empty(a.UF_PLACE)">
-                  <v-icon small>mdi-map-marker-outline</v-icon>
-                  {{a.UF_PLACE}}
-                </span>
-              </div>
+        <v-list-item-content>
+            <v-col cols="auto" class="wp-dt" v-html="get('dt', d)"></v-col>
+            <v-col>
+              <ul class="red-days" v-if="get('reds', d).length > 0">
+                <li v-for="r in get('reds', d)"
+                    :key="'red-' + r.ID">
+                    {{r.UF_TEXT}}
+                </li>
+              </ul>
+              <v-row v-for="a in get('acts', d)"
+                    :key="'act-' + a.ID">
+                <v-col cols="12" class="wp-action">
+                  {{a.UF_TEXT}}
+                  <div class="wp-action__meta">
+                    <span class="time" v-if="'00:00'!==a.at.format('HH:mm')">
+                      <v-icon small>mdi-clock-outline</v-icon>
+                      {{a.at.format('HH:mm')}}
+                    </span>
+                    <span class="loca" v-if="!empty(a.UF_PLACE)">
+                      <v-icon small>mdi-map-marker-outline</v-icon>
+                      {{a.UF_PLACE}}
+                    </span>
+                  </div>
+                </v-col>
+              </v-row>
             </v-col>
-          </v-row>
-        </v-col>
-      </v-row>
+        </v-list-item-content>    
     </v-list-item>
   </v-list>
 </v-container>
@@ -111,14 +111,12 @@ export default {
 </script>
 <style lang="scss">
 .wp {
-  & .row{
     & .row{
       & .col{
         padding-top: 0;
         padding-bottom: 0;
       }
     }
-  }
   &-dt{
     width: 8rem;
     line-height: 1.115;
@@ -132,6 +130,18 @@ export default {
     & .week{
       color: #4a65ce;
     }
+  }
+  & .current{
+      & .day{
+          border-radius: 500px;
+          background: var(--v-primary-lighten3);
+          color: #fff;
+          width: 4rem;
+          height: 4rem;
+          line-height: 4rem;
+          font-size: 2.5rem;
+          text-align: center;
+      }
   }
   & .red-days{
     font-size: 0.85rem;

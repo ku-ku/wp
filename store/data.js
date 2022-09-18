@@ -11,6 +11,7 @@ export const state = ()=>({
     statuses: A_STATUSES,
     user: null,
     divisions: null,
+    division: null,
     staffing: null,
     employees: null,
     places: null,

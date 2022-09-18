@@ -44,6 +44,7 @@
                 color="primary"
                 :events="events()"
                 :type="type"
+                :weekdays="[1, 2, 3, 4, 5, 6, 0]"
                 v-on:click:date="viewDay"
                 v-on:click:event="edit"
                 v-on:change="change">
@@ -55,13 +56,19 @@
                 <template v-slot:activator="{ on, attrs }">
                     <div v-html="get('title', event)" 
                          v-on="on"
-                         v-bind:class="{'red-day': event.red}">
+                         v-bind:class="{'red-day': event.red, 'not-complete': !event.ready}">
                     </div>
                 </template>    
                 <span v-html="event.title"></span>
             </v-tooltip>    
         </template>
         <template v-slot:interval="{date, time}">
+            <!-- TODO: v-list>
+                <v-list-item v-for="e in events(time)"
+                             :key="'ev-' + e.id">
+                    <span v-html="e.title"></span>
+                </v-list-item>
+            </v-list-->
             <v-btn x-small 
                    elevation="0"
                    color="white"
@@ -117,7 +124,6 @@ export default {
     name: 'WpCalendar',
     fetchOnServer: false,
     data(){
-        const _d = new Date();
         return {
             DIA_MODES,
             loading: false,
@@ -129,12 +135,13 @@ export default {
         };
     },
     computed: {
+        ...mapState({
+            period: state => state.period,
+            division: state => state.data.division
+        }),
         imp(){
             return this.$route.query.imp;
-        },
-        ...mapState({
-            period: state => state.period
-        })
+        }
     },
     methods:{
         _fetch(){
@@ -189,21 +196,25 @@ export default {
             this.$store.commit("data/set", {acts: null, reds: null});
             this._fetch();
         },
-        events(){
+        events(at){
             const _FMT = "YYYY-MM-DD HH:mm:ss";
             if (!!this.all){
-                const colors = ['blue', 'indigo', 'deep-purple', 'cyan', 'green', 'orange', 'grey darken-1'];
+                const colors = ['blue', 'indigo', 'brown', 'cyan', 'green', 'orange', 'teal darken-3'];
                 const _color = ()=>{
                     return colors[Math.floor((colors.length + 1) * Math.random())];
                 };
-                return this.all.map( a => {
+                const dvs = this.division;
+                const events =  this.all.map( a => {
                     const e = {
                         id: a.ID,
                         name: a.UF_TEXT,
+                        time: $moment(a.UF_ADT).format("HH:mm"),
                         start: $moment(a.UF_ADT).format(_FMT),
                         color: (1==a.UF_RED) ? "" : _color(),
                         timed: !!a.UF_DAYATTR,
-                        red: 1==a.UF_RED
+                        red:   (1==a.UF_RED),
+                        ready: (1==a.UF_READY),
+                        dvs:   a.UF_DVS
                     };
                     const tm = $moment(a.UF_ADT).format("HH:mm");
                     e.title = e.name;
@@ -212,8 +223,22 @@ export default {
                     } else if (!e.red) {
                         e.start = $moment(a.UF_ADT).add(9, 'hours').format(_FMT);
                     }
+                    if ( 
+                            (!e.red)
+                         && (!e.ready)
+                       ) {
+                             e.color = 'grey darken-1';
+                    }
+                    
                     return e;
+                }).filter( e => {
+                    return (!dvs)||(dvs.ID < 1)||(e.red)||(e.dvs==dvs.ID);
                 });
+                console.log('events', events);
+                if (!!at){
+                    return events.filter( e => e.time === at );
+                }
+                return events;
             } else {
                 return [];
             }
@@ -298,6 +323,9 @@ export default {
     & .red-day{
         background: #fff;
         color: $red-color
+    }
+    & .not-complete{
+        background: var(--v-primary-lighten5);
     }
 }
 .v-event-timed{
