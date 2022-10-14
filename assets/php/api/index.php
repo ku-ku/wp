@@ -21,6 +21,9 @@ $params = isset($request["params"]) ? $request["params"] : false;
 $data = false;
 $valid = true;
 switch ($q){
+    case "auth":
+        $data = doauth( $params );
+        break;
     case "acts":
         $data = acts( $params );
         break;
@@ -81,7 +84,7 @@ function user(){
   
     global $USER;
 
-    $USER->Authorize(10); 
+/*    $USER->Authorize(10); */
 
     if ( $USER->IsAuthorized() ){
         
@@ -114,6 +117,17 @@ function user(){
     }
     return array( "id" => -1 );
 }   //user
+
+function doauth($params ){
+    global $APPLICATION;
+    global $USER;
+    $APPLICATION->RestartBuffer();
+    if (!is_object($USER)) $USER = new CUser;
+    $arAuthResult = $USER->Login($params["u"], $params["p"], "Y");
+    $APPLICATION->arAuthResult = $arAuthResult;
+    return user();
+}
+
 
 function divisions($params = false){
     $res = array();

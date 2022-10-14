@@ -73,10 +73,13 @@
 </template>
 
 <script>
+import Vue from 'vue';
 import { mapState } from 'vuex';
 
 import WpBar from '~/components/WpBar.vue';
 import WpDialog from '~/components/WpDialog.vue';
+import WpAuthBtn from '~/components/WpAuthBtn.vue';
+
 import { DIA_MODES } from '~/utils';
 
 export default {
@@ -91,6 +94,22 @@ export default {
       navi: null,
       dialog: false
     }
+  },
+  mounted(){
+      this.$nextTick(()=>{
+                        if ( !this.has('user') ){
+                            var el, place = $(".breadcrumbs");
+                            if (place.length > 0){
+                                el = $('<div id="wp-go-auth"></div>').appendTo(place);
+                                WpAuthBtn.props.dark.default = true;
+                            } else {
+                                WpAuthBtn.props.dark.default = false;
+                                el = $('<div id="wp-go-auth"></div>').prependTo(this.$el);
+                            }
+                            WpAuthBtn.parent = this;
+                            new Vue(WpAuthBtn).$mount(el.get(0));
+                        }
+      });
   },
   computed:  {
     ...mapState({
