@@ -1,7 +1,8 @@
 <template>
     <v-app-bar app
                dark
-               color="primary">
+               color="primary"
+               fixed>
       <v-app-bar-nav-icon v-on:click.stop="$emit('navi')"></v-app-bar-nav-icon>
       <v-autocomplete dense
                       v-model="division"
@@ -11,6 +12,7 @@
                       no-data-text="нет данных"
                       hide-no-data
                       item-value="ID"
+                      style="max-width:20rem;"
                       single-line
                       return-object>
                 <template v-slot:selection="{ item }">
@@ -47,12 +49,11 @@ export default {
     name: "WpBar",
     computed: {
         divisions(){
-            var dvss = [{ID: -1, UF_CODE: '', UF_NAME:"ОБЩИЙ"}];
-            if (this.$store.state.data.divisions){
-                dvss = [dvss[0], ...this.$store.state.data.divisions.filter( d=> d.UF_ACTIVE == 1)];
-            };
-            return dvss;
-        },
+            return [
+                        {ID: -1, UF_CODE: '', UF_NAME:"ОБЩИЙ"},
+                        ...this.$store.getters["data/divisions"].filter( d => (d.UF_ACTIVE == 1) )
+            ];
+        },  //divisions
         division: {
             get(){
                 return this.$store.state.data.division;
@@ -64,9 +65,3 @@ export default {
     }
 };
 </script>
-<style lang="scss" scoped>
-  .v-toolbar{
-    &__content{
-    }
-  }
-</style>

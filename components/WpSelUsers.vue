@@ -4,12 +4,14 @@
         <v-list-item-group v-if="has('employees')" 
                            v-model="selected"
                            color="primary"
-                           multiple>
+                           multiple
+                           v-on:change="change">
             <v-list-item v-for="emp in employees"
                         :key="'emp-' + emp.ID"
                         :value="emp.ID">
                 <v-list-item-icon>
                     <v-icon v-if="has('checked', emp)" small>mdi-checkbox-outline</v-icon>
+                    <v-icon v-else small>mdi-checkbox-blank-outline</v-icon>
                 </v-list-item-icon>
                 <v-list-item-content class="flex-column align-start">
                     {{emp.UF_EMPNAME}}
@@ -35,7 +37,7 @@ export default {
     inject: ['needs'],
     data(){
         return {
-            selected: [],
+            selected: [],  /* selected ID`s */
             search: null
         };
     },
@@ -61,6 +63,17 @@ export default {
                 const re = new RegExp('(' + this.search + ')+', 'gi');
                 return this.$store.state.data.employees?.filter( e => re.test(e.UF_EMPNAME));
             }
+        },
+        names(){
+            const sels = [],
+                  emps = this.$store.state.data.employees || [];
+            this.selected.forEach( s => {
+                const n = emps.findIndex( e => e.ID == s);
+                if ( n > -1){
+                    sels.push(emps[n].UF_EMPNAME);
+                }
+            });
+            return sels.length > 0 ? sels.join(", ") : '';
         }
     },
     methods: {
@@ -75,9 +88,13 @@ export default {
         },
         use(items){
             this.selected = Array.isArray(items) ? items : [];
+            this.needs('info', this.names);
         },
         validate(){
             return true;
+        },
+        change(){
+            this.needs('info', this.names);
         },
         save(){
             this.$emit("success", this.selected);

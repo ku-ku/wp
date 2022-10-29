@@ -1,56 +1,64 @@
 <template>
-    <v-row class="wp-auth fill-height" justify="center" align="center">
-        <v-col cols="11" sm="6">
-            <v-form v-on:submit.stop.prevent="onauth" action="#" v-model="valid">
-                <v-card class="elevation-3">
-                    <v-card-title>
-                        <div class="form-icon">
-                            <v-icon :color="has('user') ? 'primary': 'default'">
-                                {{has('user')?'mdi-account':'mdi-account-lock'}}
-                            </v-icon>
-                        </div>
-                        <div class="form-title" v-html="title"></div>
-                    </v-card-title>
-                    <v-card-text>
-                        <v-text-field
-                            label="Логин"
-                            name="login"
-                            v-model="user.u"
-                            autofocus
-                            :rules="[rules.empty]"
-                            required>
-                            <v-icon slot="prepend" small>mdi-account</v-icon>
-                        </v-text-field>
-                        <v-text-field
-                            label="Пароль"
-                            name="p"
-                            type="password"
-                            :rules="[rules.empty]"
-                            v-model="user.p">
-                            <v-icon slot="prepend" small>mdi-asterisk</v-icon>
-                        </v-text-field>
-                        <v-alert color="warning" 
-                                 dark 
-                                 class="my-5" 
-                                 icon="mdi-alert"
-                                 v-if="has('error')">
-                            {{ error }}
-                        </v-alert>
-                    </v-card-text>
-                    <v-card-actions>
-                        <v-btn type="submit" 
-                               tile
-                               :loading="pending"
-                               dark color="red darken-4" >Войти</v-btn>
-                    </v-card-actions>
-                    <v-footer>
-                        <v-spacer />
-                        <span>Законодательное Собрание Краснодарского края</span>
-                    </v-footer>
-                </v-card>
-            </v-form>
-        </v-col>
-    </v-row>
+    <v-container>
+        <v-row class="wp-auth fill-height" justify="center" align="center">
+            <v-col cols="11" md="6">
+                <v-form v-on:submit.stop.prevent="onauth" action="#" v-model="valid">
+                    <v-card class="elevation-3">
+                        <v-card-title>
+                            <div class="form-icon">
+                                <v-icon :color="has('user') ? 'primary': 'default'">
+                                    {{has('user')?'mdi-account':'mdi-account-lock'}}
+                                </v-icon>
+                            </div>
+                            <div class="form-title" v-html="title"></div>
+                        </v-card-title>
+                        <v-card-text>
+                            <v-text-field
+                                label="Логин"
+                                name="login"
+                                v-model="user.u"
+                                autofocus
+                                :rules="[rules.empty]"
+                                required>
+                                <v-icon slot="prepend" small>mdi-account</v-icon>
+                            </v-text-field>
+                            <v-text-field
+                                label="Пароль"
+                                name="p"
+                                type="password"
+                                :rules="[rules.empty]"
+                                v-model="user.p">
+                                <v-icon slot="prepend" small>mdi-asterisk</v-icon>
+                            </v-text-field>
+                            <v-alert color="warning" 
+                                     dark 
+                                     class="my-5" 
+                                     icon="mdi-alert"
+                                     v-if="has('error')">
+                                {{ error }}
+                            </v-alert>
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-btn type="submit" 
+                                   tile
+                                   :loading="pending"
+                                   dark 
+                                   :color="has('user') ? 'primary' : 'red darken-4'">
+                                <template v-if="has('user')">
+                                    <v-icon>mdi-check-circle-outline</v-icon>&nbsp;ok
+                                </template>
+                                <template v-else>Войти</template>
+                            </v-btn>
+                        </v-card-actions>
+                        <v-footer>
+                            <v-spacer />
+                            <span>Законодательное Собрание Краснодарского края</span>
+                        </v-footer>
+                    </v-card>
+                </v-form>
+            </v-col>
+        </v-row>
+    </v-container>    
 </template>
 <script>
 import { empty } from "~/utils";
@@ -106,20 +114,16 @@ export default {
             this.error = '';
             this.pending = true;
             try {
-                
                 const user = await $nuxt.api("auth", this.user);
-                this.$store.commit("set", { user });
+                this.$store.commit("data/set", { user });
                 if (user.id < 1){
                     throw {message: 'Not Authorized'};
                 }
-                
-                this.user.title = user.title;
                 this.user.id = user.id;
-                
                 
                 setTimeout( () => {
                     this.$router.replace({name: 'index'});
-                }, 2000);
+                }, 1000);
             } catch(e) {
                 console.log('ERR (login)', e);
                 this.error = 'Логин или пароль неверный';

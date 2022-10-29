@@ -146,7 +146,7 @@ class CHLBTAdds extends CHLBTEntity{
     
     public function exists(){
         global $DB;
-        $rs = $DB->Query(sprintf("select UF_MAIN from wpadds where UF_Q='%s'", $this->q));
+        $rs = $DB->Query(sprintf("select UF_MAIN from wpadds where UF_Q='%s' order by UF_MAIN DESC", $this->q));
         if( $el = $rs->fetch() ){
             $res = $el['UF_MAIN'];
         } else {

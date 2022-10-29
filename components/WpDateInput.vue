@@ -8,7 +8,6 @@
             <v-menu ref="menu"
                     v-model="menu"
                     :close-on-content-click="false"
-                    :return-value.sync="date"
                     transition="scale-transition"
                     offset-y
                     min-width="auto">
@@ -20,6 +19,9 @@
                                show-current
                                no-title
                                locale="ru-ru"
+                               color="primary"
+                               @input="menu = false"
+                               first-day-of-week="1"
                                scrollable>
                 </v-date-picker>
             </v-menu>
@@ -68,11 +70,16 @@ export default {
         /** for picker */
         date: {
             get(){
+                if (empty(this.text)){
+                    return null;
+                }
                 const m = moment(this.text, this.mask);
-                return ( !empty(this.text)&&m.isValid() ) ? m.toISOString() : null;
+                console.log('get', m);
+                return m.isValid() ? m.toISOString() : null;
             },
             set(dt){
-                if (!empty(dt)){
+                console.log('set dt', dt);
+                if ( !empty(dt) ){
                     this.text = moment(dt, "YYYY-MM-DD").format(this.mask);
                 }
                 this.menu = false;

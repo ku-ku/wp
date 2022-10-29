@@ -132,7 +132,7 @@ function doauth($params ){
 
 function divisions($params = false){
     $res = array();
-    $dvss = new CHLBTEntity('WpDivisions');
+    $dvss = new CHLBTEntity('department_codes');
     if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
@@ -265,7 +265,7 @@ function users($params = false){
  */
 function staffing($params = false){
     $res;
-    $entity = new CHLBTEntity('WpStaffing');
+    $entity = new CHLBTEntity('staffing');
     if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
@@ -295,7 +295,7 @@ function staffing($params = false){
  */
 function employees($params = false){
     $res;
-    $entity = new CHLBTEntity('WpEmployees');
+    $entity = new CHLBTEntity('employees');
     if ( ($params !== false) && (!!$params["action"]) ){
         switch($params["action"]){
             case "save":
@@ -320,7 +320,6 @@ function employees($params = false){
                 break;
         }
     } else {
-        $res = array();
         $dirs = new stdClass();
         $dirs->users = array_slice(users(false), 0);
         $dirs->staffs= array_slice(staffing(false), 0);
@@ -583,8 +582,8 @@ function places(){
 function imp($params){
     $imp = new WpImport($params["mn"], $params["yr"]);
     $res = array(
-        "acts" => $imp->doPlan(),
-        "reds" => $imp->doReds()
+        "acts" => count($imp->doPlan()),
+        "reds" => count($imp->doReds())
     );
     return $res;
 }   //imp...

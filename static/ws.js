@@ -137,7 +137,7 @@ const actualizze = () => {
         const that = KEYS[ n ];
         
         fetch(`${ env.apiUrl }?q=${ that }`)
-                .then( r => r.json() )
+                .then( r => (!!r) ? r.json() : [] )
                 .then( async res => {
                             const o = {};
                             o[that] = res;

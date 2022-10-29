@@ -95,22 +95,6 @@ export default {
       dialog: false
     }
   },
-  mounted(){
-      this.$nextTick(()=>{
-                        if ( !this.has('user') ){
-                            var el, place = $(".breadcrumbs");
-                            if (place.length > 0){
-                                el = $('<div id="wp-go-auth"></div>').appendTo(place);
-                                WpAuthBtn.props.dark.default = true;
-                            } else {
-                                WpAuthBtn.props.dark.default = false;
-                                el = $('<div id="wp-go-auth"></div>').prependTo(this.$el);
-                            }
-                            WpAuthBtn.parent = this;
-                            new Vue(WpAuthBtn).$mount(el.get(0));
-                        }
-      });
-  },
   computed:  {
     ...mapState({
           user: state => state.data.user,

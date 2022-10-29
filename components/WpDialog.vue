@@ -51,6 +51,10 @@
                     <v-icon small>mdi-close</v-icon>закрыть
                 </v-btn>
             </v-card-actions>
+            <v-card-actions v-if="has('info')" 
+                            class="wp-info">
+                {{ needs.info }}
+            </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
@@ -103,7 +107,8 @@ export default {
             fixed: false,
             needs: {
                 searchable: false,
-                title: undefined
+                title: undefined,
+                info:  undefined
             }
         };
     },
@@ -138,6 +143,8 @@ export default {
             switch(q){
                 case "add":
                     return this.fAdd;
+                case "info":
+                    return !!this.needs.info;
                 case "searchable":
                     return !!this.needs.searchable;
             }
@@ -148,6 +155,7 @@ export default {
          * @param {Object?} item for editing
          */
         open(item){
+            this.needs.info = null;
             var item = (!!item) ? item : {ID: -1};
             const f = this.$refs["form"];
             this.show = (new Date()).getTime();
@@ -180,6 +188,11 @@ export default {
         }
         &__actions{
             justify-content: flex-end;
+            &.wp-info{
+                font-size: 0.75rem;
+                justify-content: flex-start;
+                color: var(--v-secondary-lighten2);
+            }
         }
     }
 </style>

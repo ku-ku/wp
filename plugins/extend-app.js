@@ -9,8 +9,6 @@ if (
     window["$"] = require("jquery");
 }
 
-
-
 export default async function( ctx ){
     const { app, env, store } = ctx;
     
@@ -60,9 +58,11 @@ export default async function( ctx ){
                 try {
                     await store.dispatch("data/user");
                     const u = store.state.data.user;
+/*                    
                     if (u.haswp){
                         setTimeout(() => worker.postMessage({type:"read"}), 500);
                     }
+*/
                 } catch(e) {
                    n++;
                    if (n < 3){
@@ -131,9 +131,17 @@ export default async function( ctx ){
                 return appMsg.show(msg);
             },
             cache(data){
+                if (1==1){
+                    return;
+                }
                 if (!!worker){
                     worker.postMessage({type:"save", data});
                 }
+            },
+            hidextras(){
+                $("body > .header").css({display: "none"});
+                $(".content .content-header").css({display: "none"});
+                //$(".v-main").css({padding: "initial"});
             }
         }       //methods
     });

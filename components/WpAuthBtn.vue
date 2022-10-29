@@ -1,5 +1,7 @@
 <template>
-    <v-btn text :to="{name:'auth'}" 
+    <v-btn text 
+           :to="{name:'auth'}" 
+           :dark="dark"
            color="primary" 
            v-show="has('show')"
            tile>

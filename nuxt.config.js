@@ -71,6 +71,7 @@ export default {
   },
 
   build: {
-    publicPath: isDev ? undefined : '//kubzsk.ru/wp/app/'
+    publicPath: isDev ? undefined : '//kubzsk.ru/wp/app/',
+    postcss: null
   }
 }

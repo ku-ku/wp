@@ -70,7 +70,8 @@ export default {
         this.s = null;
         this.selected = [];
         try {
-            this.all = await this.$store.dispatch("data/list", "divisions");
+            await this.$store.dispatch("data/list", "divisions");
+            this.all = this.$store.getters["data/divisions"];
         } catch(e) {
             this.all = [];
             console.log('ERR (divisions)', e);

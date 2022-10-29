@@ -1,7 +1,4 @@
 <?php
-ignore_user_abort(true);
-set_time_limit( 5*60 );  //seconds
-
 require_once(__DIR__ . '/chlbt.php');
 
 class WpImport  {
@@ -63,11 +60,11 @@ class WpImport  {
         }
         
         /** data */
-        $dvss = new CHLBTEntity('WpDivisions');
+        $dvss = new CHLBTEntity('department_codes');
         $args = array();
         $this->dvss = $dvss->list($args);
         
-        $stfs = new CHLBTEntity('WpStaffing');
+        $stfs = new CHLBTEntity('staffing');
         $this->stfs = $stfs->list($args);
         
         
@@ -93,7 +90,7 @@ class WpImport  {
     }
     
     private function add_dvs( $o ){
-        $dvss = new CHLBTEntity('WpDivisions');
+        $dvss = new CHLBTEntity('department_codes');
         $item = array(
                                 "UF_ACTIVE" => 1, 
                                 "UF_CODE" => $o->dvscode,
@@ -158,7 +155,7 @@ class WpImport  {
         
         $stfId = $this->stf_by_name($emp->stfname);
         if ($stfId < 1){
-            $stfs = new CHLBTEntity('WpStaffing');
+            $stfs = new CHLBTEntity('staffing');
             $item = array(
                             "UF_NAME" => $emp->stfname,
                             "UF_DISABLE" => 0,
@@ -170,7 +167,7 @@ class WpImport  {
             $this->stfs[] = $item;
         }
         
-        $entity = new CHLBTEntity('WpEmployees');
+        $entity = new CHLBTEntity('employees');
         $item  = array(
                     "UF_EMPNAME"=>$emp->name,
                     "UF_DVS"  => $dvsId,
@@ -194,15 +191,9 @@ class WpImport  {
         foreach($this->plan as $p){
             $uuid = $p->ID;
             $adds = new CHLBTAdds("PLN_" . $uuid, -1);
-            $iid = $adds->exists();
-            if ($iid > 0){
-                $args = array( 'select' => array('ID'), 'filter' => array('=ID' => $iid) );
-                if ( count($entity->list($args)) > 0 ){
-                    continue;
-                }
+            if ( $adds->exists() > 0 ){
+                continue;
             }
-            
-            
             $dvsId = $this->dvs_by_code($p->dvscode);
             if ($dvsId < 1){
                 $dvsId = $this->add_dvs($p);
@@ -226,8 +217,8 @@ class WpImport  {
                     "UF_AUTHOR"   => 10, //$USER->GetID(),
                     "UF_INSTIME"  => Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($p->instime))
             );
-            $_res = $entity->save($row);
-            $plnId = $_res["ID"];
+            $res = $entity->save($row);
+            $plnId = $res["ID"];
             if ($p->adds){
                 $heads = array();
                 $emps  = array();
@@ -262,14 +253,9 @@ class WpImport  {
         foreach($this->reds as $r){
             $uuid = $r->ID;
             $adds = new CHLBTAdds("RED_" . $uuid, -1);
-            $iid = $adds->exists();
-            if ($iid > 0){
-                $args = array( 'select' => array('ID'), 'filter' => array('=ID' => $iid) );
-                if ( count($entity->list($args)) > 0 ){
-                    continue;
-                }
+            if ( $adds->exists() > 0 ){
+                continue;
             }
-            
             $row  = array(
                     "UF_ADT"      => Bitrix\Main\Type\Date::createFromTimestamp(strtotime($r->day)),
                     "UF_RED"      => 1,
@@ -284,8 +270,8 @@ class WpImport  {
                     "UF_AUTHOR"   => 10, //TODO: $USER->GetID(),
                     "UF_INSTIME"  => new Bitrix\Main\Type\DateTime()
             );
-            $_res = $entity->save($row);
-            $redId = $_res["ID"];
+            $res = $entity->save($row);
+            $redId = $res["ID"];
             $adds = new CHLBTAdds("RED_" . $uuid, $redId);
             $adds->add($redId);
             $res[] = $redId;

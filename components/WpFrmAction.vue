@@ -262,9 +262,11 @@ export default {
                 this.item = Array.isArray(resp) ? resp[0] : {};
                 this.item.UF_STATUS = Number(this.item.UF_STATUS);
             } else {
+                console.log('fixed', FIX_ITEM.fixed);
                 if (!item.UF_ADT){
                     item.UF_ADT = new Date();
                 }
+                item.UF_DVS = this.$store.state.data.division?.ID;
                 //restore saved value`s
                 if (FIX_ITEM.fixed){
                     item.UF_DVS  = FIX_ITEM.UF_DVS;
@@ -292,10 +294,12 @@ export default {
             this.$forceUpdate();
         },
         set(q, val){
-            console.log(`change ${q}`, val);
             switch(q){
                 case "fix":
                     FIX_ITEM.fixed = !FIX_ITEM.fixed;
+                    if (FIX_ITEM.fixed){
+                        this.fixfix();
+                    }
                     return FIX_ITEM.fixed;
                 default:
                     this.item[q] = val;
@@ -313,7 +317,7 @@ export default {
                 case "EMP-NAMES":
                     var names = [];
                     this.item[(q==="HEAD-NAMES") ? "HEADS" : "EMPS"]?.map( id => {
-                        const n = this.employees.findIndex( e => (e.ID === id) );
+                        const n = this.employees?.findIndex( e => (e.ID === id) );
                         if ( n > -1){
                             var s = this.employees[n].UF_EMPNAME;
                             var a = s.split(/\s+/g);
@@ -349,6 +353,11 @@ export default {
             this.errs = errs;
             return (errs.n === 0);
         },
+        fixfix(){
+            Object.keys(this.item).map( k => {
+                FIX_ITEM[k] = this.item[k];
+            });
+        },
         async save(){
             console.log('saving', this.item);
             try {
@@ -356,9 +365,7 @@ export default {
                 await this.$store.dispatch("data/upd", {acts: this.item});
                 this.$emit("success", this.item);
                 if (FIX_ITEM.fixed){
-                    Object.keys(this.item).map( k => {
-                        FIX_ITEM[k] = this.item[k];
-                    });
+                    this.fixfix();
                 }
             } catch(e){
                 this.$emit("error", e);

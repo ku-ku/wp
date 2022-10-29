@@ -206,5 +206,21 @@ export const getters = {
     all: state => {
         var a = state.acts || [];
         return a.concat(state.reds);
+    },
+    divisions: state => {
+        const re = /\D+/g;
+        return (state.divisions?.map( d => {
+            d.sort = 0;
+            const a = (d.UF_CODE || '999').split(/\D+/g);
+            while (a.length < 5){
+                a.push(0);
+            }
+            a.reverse().forEach( (n, i) => {
+                d.sort += Number(n) * Math.pow(20, i + 1);
+            });
+            return d;
+        }) || []).sort( (d1, d2) => {
+            return d1.sort < d2.sort ? -1 : d1.sort > d2.sort ? 1 : 0;
+        });
     }
 };

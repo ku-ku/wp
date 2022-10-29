@@ -91,6 +91,7 @@ function has_group($groupId){
     $res = CGroup::GetList($f, $sort, $filter);
 
     return ($res->SelectedRowsCount() > 0);
+    
 }
 
 
@@ -130,16 +131,16 @@ function install(){
     
     
     /**
-     * HLBT: WpStaffing
+     * HLBT: Staffing
      */
-    if ( !exits('wpstaffing') ){
+    if ( !exits('staffing') ){
         $arLangs = Array(
-            'ru' => 'План мероприятий: Должности',
-            'en' => 'Staffing for planning'
+            'ru' => 'Должности',
+            'en' => 'Staffing'
         );
         $result = HLBT::add(array(
-            'NAME' => 'WpStaffing',
-            'TABLE_NAME' => 'wpstaffing'
+            'NAME' => 'Staffing',
+            'TABLE_NAME' => 'staffing'
         ));
         if ($result->isSuccess()) {
             $id = $result->getId();
@@ -208,117 +209,20 @@ function install(){
             return;
         }
     } else {
-        echo 'WpStaffing HLBL already exists' . PHP_EOL;
+        echo 'Staffing HLBL already exists' . PHP_EOL;
     } //staffing--------------------------------------------------------------
     
-
-
-    /**
-     * HLBT: WpDivisions
-     */
-    if ( !exits('wpdivisions') ){
-        $arLangs = Array(
-            'ru' => 'План мероприятий: Подразделения',
-            'en' => 'Divisions for planning'
-        );
-        $result = HLBT::add(array(
-            'NAME' => 'WpDivisions',
-            'TABLE_NAME' => 'wpdivisions'
-        ));
-        if ( $result->isSuccess() ) {
-            $id = $result->getId();
-            foreach($arLangs as $lang_key => $lang_val){
-                HL\HighloadBlockLangTable::add(array(
-                    'ID' => $id,
-                    'LID' => $lang_key,
-                    'NAME' => $lang_val
-                ));
-            }
-            echo sprintf('#%d %s successed', $id, 'WpDivisions') . PHP_EOL;
-            $UFObject = 'HLBLOCK_'.$id;
-            $arFields = Array(
-                'UF_NAME'=>Array(
-                    'ENTITY_ID' => $UFObject,
-                    'FIELD_NAME' => 'UF_NAME',
-                    'USER_TYPE_ID' => 'string',
-                    'MANDATORY' => 'Y',
-                    "EDIT_FORM_LABEL" => Array('ru'=>'Наименование', 'en'=>'DVS title'), 
-                    "LIST_COLUMN_LABEL" => Array('ru'=>'Наименование', 'en'=>'DVS title'),
-                    "LIST_FILTER_LABEL" => Array('ru'=>'Наименование', 'en'=>'DVS title'), 
-                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
-                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>''),
-                ),
-                'UF_CODE'=>Array(
-                    'ENTITY_ID' => $UFObject,
-                    'FIELD_NAME' => 'UF_CODE',
-                    'USER_TYPE_ID' => 'string',
-                    'MANDATORY' => 'Y',
-                    "EDIT_FORM_LABEL" => Array('ru'=>'Код', 'en'=>'Dvs code'), 
-                    "LIST_COLUMN_LABEL" => Array('ru'=>'Код', 'en'=>'Dvs code'),
-                    "LIST_FILTER_LABEL" => Array('ru'=>'Код', 'en'=>'Dvs code'), 
-                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
-                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>''),
-                ),
-                'UF_DISABLE'=>Array(
-                    'ENTITY_ID' => $UFObject,
-                    'FIELD_NAME' => 'UF_ACTIVE',
-                    'USER_TYPE_ID' => 'boolean',
-                    'MANDATORY' => 'Y',
-                    "EDIT_FORM_LABEL" => Array('ru'=>'Активно', 'en'=>'Active'), 
-                    "LIST_COLUMN_LABEL" => Array('ru'=>'Активно', 'en'=>'Active'),
-                    "LIST_FILTER_LABEL" => Array('ru'=>'Активно', 'en'=>'Active'), 
-                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
-                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>''),
-                    "SETTINGS" => array(
-                        "DEFAULT_VALUE" => "1"
-                    )
-                ),
-                'UF_SORT'=>Array(
-                    'ENTITY_ID' => $UFObject,
-                    'FIELD_NAME' => 'UF_SORT',
-                    'USER_TYPE_ID' => 'integer',
-                    'MANDATORY' => 'Y',
-                    "EDIT_FORM_LABEL" => Array('ru'=>'Порядок', 'en'=>'Sort order'), 
-                    "LIST_COLUMN_LABEL" => Array('ru'=>'Порядок', 'en'=>'Sort order'),
-                    "LIST_FILTER_LABEL" => Array('ru'=>'Порядок', 'en'=>'Sort order'), 
-                    "ERROR_MESSAGE" => Array('ru'=>'', 'en'=>''), 
-                    "HELP_MESSAGE" => Array('ru'=>'', 'en'=>''),
-                    "SETTINGS" => array(
-                        "DEFAULT_VALUE" => "100"
-                    )
-                )
-            );
-            $arSavedFields = array();
-            foreach($arFields as $arField){
-                $obUserField  = new CUserTypeEntity();
-                $fieldId = $obUserField->Add($arField);
-                $arSavedFields[] = $fieldId;
-            }
-            echo 'WpDivisions fields ids:' . PHP_EOL;
-            print_r($arSavedFields);
-        } else {
-            $errors = $result->getErrorMessages();
-            echo 'ERR (WpDivisions)' . PHP_EOL;
-            print_r($errors);
-            return;
-        }
-    } else {
-        echo 'WpDivisions HLBL already exists' . PHP_EOL;
-    } //WpDivisions-------------------------------------------------------------
-
-
-
     /**
      * Eployees HLBT
      */
-    if ( !exits('WpEmployees') ){
+    if ( !exits('Employees') ){
         $arLangs = Array(
-            'ru' => 'План мероприятий: Сотрудники',
-            'en' => 'Employees of work plan'
+            'ru' => 'Сотрудники',
+            'en' => 'Employees'
         );
         $result = HLBT::add(array(
-            'NAME' => 'WpEmployees',
-            'TABLE_NAME' => 'wpemployees'
+            'NAME' => 'Employees',
+            'TABLE_NAME' => 'employees'
         ));
         if ($result->isSuccess()) {
             $id = $result->getId();
@@ -331,8 +235,8 @@ function install(){
             }
             echo sprintf('#%d %s successed', $id, 'Employees') . PHP_EOL;
             
-            $dvsIds = fieldIds('WpDivisions', 'UF_NAME');
-            $stfIds = fieldIds('WpStaffing',  'UF_NAME');
+            $dvsIds = fieldIds('department_codes', 'UF_NAME');
+            $stfIds = fieldIds('Staffing', 'UF_NAME');
             
             $UFObject = 'HLBLOCK_'.$id;
             $arFields = Array(
@@ -453,8 +357,8 @@ function install(){
             echo sprintf('#%d %s successed', $id, 'WpActions') . PHP_EOL;
             
             $dvsIds = fieldIds('department_codes', 'UF_NAME');
-            $stfIds = fieldIds('WpStaffing',  'UF_NAME');
-            $empIds = fieldIds('WpEmployees', 'UF_EMPNAME');
+            $stfIds = fieldIds('Staffing', 'UF_NAME');
+            $empIds = fieldIds('Employees', 'UF_EMPNAME');
             
             $UFObject = 'HLBLOCK_'.$id;
             $arFields = Array(
@@ -768,7 +672,7 @@ function install(){
                     "HELP_MESSAGE" => Array('ru'=>'', 'en'=>'')
                 ),
             );
-            
+
             echo sprintf('#%d %s successed', $id, 'WpAdds') . PHP_EOL;
             $arSavedFields = array();
             foreach($arFields as $arField){
@@ -787,5 +691,5 @@ function install(){
     } else {
         echo 'WpAdds HLBT already exists' . PHP_EOL;
     }
-    
+
 }
