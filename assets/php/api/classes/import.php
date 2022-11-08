@@ -113,10 +113,10 @@ class WpImport  {
      * @param string $code
      * @return int (ID of department_codes tb)
      */
-    private function dvs_by_code( $code ){
+    private function dvs_by_name( $name ){
         $res = -1;
         foreach($this->dvss as $d){
-            if ($d["UF_CODE"] == $code){
+            if ($d["UF_NAME"] == $name){
                 $res = $d["ID"];
                 break;
             }
@@ -150,7 +150,7 @@ class WpImport  {
             return -1;
         }
         
-        $dvsId = $this->dvs_by_code($emp->dvscode);
+        $dvsId = $this->dvs_by_name($emp->dvsname);
         if ($dvsId < 1){
             $dvsId = $this->add_dvs($emp);
         }
@@ -203,7 +203,7 @@ class WpImport  {
             }
             
             
-            $dvsId = $this->dvs_by_code($p->dvscode);
+            $dvsId = $this->dvs_by_name($p->dvsname);
             if ($dvsId < 1){
                 $dvsId = $this->add_dvs($p);
             }

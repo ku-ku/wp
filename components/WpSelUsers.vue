@@ -1,5 +1,6 @@
 <template>
     <v-list class="act-employees"
+            ref="list"
             dense>
         <v-list-item-group v-if="has('employees')" 
                            v-model="selected"
@@ -8,9 +9,11 @@
                            v-on:change="change">
             <v-list-item v-for="emp in employees"
                         :key="'emp-' + emp.ID"
-                        :value="emp.ID">
+                        :value="emp.ID"
+                        v-bind:class="{seached: emp.seached}"
+                        :data-item-id="emp.ID">
                 <v-list-item-icon>
-                    <v-icon v-if="has('checked', emp)" small>mdi-checkbox-outline</v-icon>
+                    <v-icon v-if="emp.checked" small>mdi-checkbox-outline</v-icon>
                     <v-icon v-else small>mdi-checkbox-blank-outline</v-icon>
                 </v-list-item-icon>
                 <v-list-item-content class="flex-column align-start">
@@ -41,28 +44,29 @@ export default {
             search: null
         };
     },
+    async fetch(){
+        return this.$store.dispatch("data/list", "employees");
+    },
     mounted(){
-        this.$store.dispatch("data/list", "employees");
         this.needs('title', 'Сотрудники');
         this.needs('searchable', true);
     },
     computed: {
         employees(){
-            if ( empty(this.search) ){
-                return [...this.$store.state.data.employees || []].sort( (e1, e2) => {
-                        const n1 = this.selected.findIndex( e => e===e1.ID ),
-                              n2 = this.selected.findIndex( e => e===e2.ID );
-                        if (n1 > -1){
-                            return -1;
-                        } else if ( n2 > -1){
-                            return 1;
-                        }
-                        return e1.UF_EMPNAME.localeCompare(e2.UF_EMPNAME);
-                });
-            } else {
-                const re = new RegExp('(' + this.search + ')+', 'gi');
-                return this.$store.state.data.employees?.filter( e => re.test(e.UF_EMPNAME));
-            }
+            const re = empty(this.search) ? null : new RegExp(`(${ this.search })+`, 'gi');
+            
+            return [...this.$store.state.data.employees || []].map(e =>{
+                e.seached = (re) ? re.test(e.UF_EMPNAME) : false;
+                e.checked = this.selected.findIndex( s => s===e.ID) > -1;
+                return e;
+            }).sort( (e1, e2) => {
+                if (e1.checked){
+                    return (e2.checked) ? e1.UF_EMPNAME.localeCompare(e2.UF_EMPNAME) : -1;
+                } else if (e2.checked){
+                    return (e1.checked) ? e1.UF_EMPNAME.localeCompare(e2.UF_EMPNAME) : 1;
+                }
+                return e1.UF_EMPNAME.localeCompare(e2.UF_EMPNAME);
+            });
         },
         names(){
             const sels = [],
@@ -87,6 +91,7 @@ export default {
             return false;
         },
         use(items){
+            this.search = null;
             this.selected = Array.isArray(items) ? items : [];
             this.needs('info', this.names);
         },
@@ -94,10 +99,29 @@ export default {
             return true;
         },
         change(){
-            this.needs('info', this.names);
+            this.$nextTick(()=>{
+                this.needs('info', this.names);
+                $(".v-dialog.v-dialog--active .v-card .v-card__text").animate({ scrollTop: 0 });
+            });
         },
         save(){
             this.$emit("success", this.selected);
+        }
+    },
+    watch: {
+        search(val){
+            this.$nextTick(()=>{
+                if ( empty(val) ){
+                    $(".v-dialog.v-dialog--active .v-card .v-card__text").animate({ scrollTop: 0 });
+                } else {
+                    const el = $(this.$refs["list"].$el).find(".seached");
+                    if (el.length > 0){
+                        el.get(0).scrollIntoView();
+                    } else {
+                        $nuxt.msg({text: `"${val}" - ничего не найдено`, timeout: 3000});
+                    }
+                }
+            });
         }
     }
 }    
@@ -109,11 +133,15 @@ export default {
             &__icon{
                 align-self: center;
             }
+            &.seached{
+                font-weight: 500;
+            }
             & .emp-meta{
                 flex: 1 1 100%;
                 width: 100%;
                 font-size: 0.75rem;
                 color: var(--v-secondary-base);
+                font-weight: 400 !important;
             }
         }
     }

@@ -39,21 +39,10 @@
 </template>
 
 <script>
-import { empty } from "~/utils/"
+import { empty, gen_days } from "~/utils/"
 import $moment from "moment";
 
 $moment.locale('ru');
-
-const _gen_days = ()=>{
-  const _d = new Date();
-  const d = $moment([_d.getFullYear(), _d.getMonth(), 1]);
-  const res = [];
-  while ( _d.getMonth()===d.get('month') ){
-      res.push( d.clone() );
-      d.add(1, 'days');
-  }
-  return res;
-};  //_gen_days
 
 
 export default {
@@ -71,7 +60,7 @@ export default {
         
         return {
           now: $moment(),
-          dates: _gen_days()
+          dates: gen_days()
         };
   }, 
   mounted(){

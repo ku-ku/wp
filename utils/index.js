@@ -1,4 +1,7 @@
 const NULL_ID = "00000000-0000-0000-0000-000000000000";
+import $moment from "moment";
+$moment.locale("ru");
+
 
 const MODES = {
     "none":     0,
@@ -43,11 +46,22 @@ const lookup = async addr => {
     });
 };   //lookup
 
+const gen_days = (at = new Date() )=>{
+  const d = $moment([at.getFullYear(), at.getMonth(), 1]);
+  const res = [];
+  while ( at.getMonth()===d.get('month') ){
+      res.push( d.clone() );
+      d.add(1, 'days');
+  }
+  return res;
+};  //_gen_days
+
 
 export {
     NULL_ID,
     MODES,
     DIA_MODES,
     empty,
-    lookup
+    lookup,
+    gen_days
 };

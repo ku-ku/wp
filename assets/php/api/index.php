@@ -54,6 +54,9 @@ switch ($q){
     case "ping":
         $data = array("pong" => (new DateTime())->getTimestamp() );
         break;
+    case "report":
+        require './exp-doc.php';
+        
     default:
         $valid = false;
 }   //switch ($q...

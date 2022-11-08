@@ -41,6 +41,11 @@
         <v-icon small>mdi-calendar-plus</v-icon>&nbsp;
         Добавить праздничный день
       </v-btn>
+      <v-btn text 
+             tile
+             v-on:click="$emit('report')">
+          <v-icon small>mdi-file-word-outline</v-icon>
+      </v-btn>    
     </v-app-bar>
 </template>
 <script>

@@ -4,7 +4,8 @@
       <wp-bar v-if="has('user')" 
               v-on:navi="navi = !navi"
               v-on:action="add('dlgAct')"
-              v-on:redday="add('dlgRed')">
+              v-on:redday="add('dlgRed')"
+              v-on:report="doreport">
       </wp-bar>
       <v-navigation-drawer v-model="navi" 
                            dark
@@ -75,12 +76,14 @@
 <script>
 import Vue from 'vue';
 import { mapState } from 'vuex';
+import $moment from "moment";
+$moment.locale("ru");
 
 import WpBar from '~/components/WpBar.vue';
 import WpDialog from '~/components/WpDialog.vue';
 import WpAuthBtn from '~/components/WpAuthBtn.vue';
 
-import { DIA_MODES } from '~/utils';
+import { DIA_MODES, gen_days } from '~/utils';
 
 export default {
   name: 'DefaultLayout',
@@ -120,7 +123,68 @@ export default {
     },
     doimp(){
       this.$router.replace({path: '/calendar', query: {imp: (new Date()).getTime()}});
-    }
+    },
+    doreport(){
+        const p = this.$store.getters['period'];
+        const days = gen_days(p.start.toDate()),
+              all  = this.$store.getters['data/all'];
+        
+        const data = {
+            start: p.start.format('DD.MM.YYYY'),
+            end:   p.end.format('DD.MM.YYYY'),
+            days:  days.map( d => {
+                const day = {
+                    day: {
+                        date: d.toISOString(),
+                        day: d.format('DD dddd')
+                    },
+                    reds: all.filter(a => (1==a.UF_RED && d.isSame(a.UF_ADT, 'day') )).map( a=> {
+                        return {
+                            id: a.ID,
+                            name: a.UF_TEXT
+                        };
+                    }),
+                    acts: all.filter(a => (1!=a.UF_RED && d.isSame(a.UF_ADT, 'day') ))
+                              .map( a => {
+                                  a.at = $moment(a.UF_ADT);
+                                  return a;
+                              })
+                              .sort( (d1, d2) => {
+                                    return (1==d1.UF_DAYATTR) ? 1 : d1.at.isBefore(d2.at) ? -1 : d1.at.isAfter(d2.at) ? 1 : 0;
+                              }).map( a => {
+                                  return {
+                                      id: a.ID,
+                                      tm: (1==a.UF_DAYATTR) ? ' ' : a.at.format("HH:mm"),
+                                      name: a.UF_TEXT,
+                                      place: a.UF_PLACE,
+                                      chief: a.CHIEF_NAME,
+                                  };
+                              })
+                };
+                return day;
+            })
+        };
+        console.log('all', data);
+        
+        $.ajax({
+                url: `${ $nuxt.context.env.apiUrl }/exp-doc.php`,
+                type: "POST",
+                contentType: 'application/json',
+                processData: false,
+                data: JSON.stringify(data),
+                xhrFields: {
+                    responseType: 'blob' 
+                },
+                cache: false,
+                success: resp => {
+                    const blob = new Blob([resp], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+                    const downloadUrl = URL.createObjectURL(blob);
+                    window.location.href = downloadUrl;
+                }
+        }).catch( e => {
+            console.log('ERR (report)', e);
+        });
+    }   //doreport
   }
 }
 </script>
