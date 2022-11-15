@@ -45,11 +45,12 @@ export default {
     },
     computed: {
         divisions(){
+            const dvss = this.$store.getters["data/divisions"];
             if (empty(this.search)){
-                return this.$store.state.data.divisions;
+                return dvss;
             } else {
                 const re = new RegExp('(' + this.search + ')+', 'gi');
-                return this.$store.state.data.divisions?.filter( e => re.test(e.UF_NAME) || re.test(e.UF_CODE) );
+                return dvss?.filter( e => re.test(e.UF_NAME) || re.test(e.UF_CODE) );
             }
         }
     },

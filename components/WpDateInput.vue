@@ -2,9 +2,13 @@
     <v-text-field :label="label"
                   v-model="text"
                   :error="!valid"
+                  :messages="messages"
+                  :readonly="readonly"
+                  :name="name"
+                  :rules="required ? [rules.empty] : []"
                   v-on:blur="validate"
                   v-bind:class="{timed: type==='datetime'}">
-        <template v-slot:append-outer>
+        <template v-slot:append-outer v-if="!readonly">
             <v-menu ref="menu"
                     v-model="menu"
                     :close-on-content-click="false"
@@ -15,14 +19,13 @@
                     <v-btn icon v-on="on"><v-icon small>mdi-calendar</v-icon></v-btn>
                 </template>
                 <v-date-picker v-model="date"
+                               :readonly="readonly"
                                picker-date
                                show-current
                                no-title
                                locale="ru-ru"
-                               color="primary"
-                               @input="menu = false"
-                               first-day-of-week="1"
-                               scrollable>
+                               scrollable
+                               @input="menu = false">
                 </v-date-picker>
             </v-menu>
         </template>
@@ -30,10 +33,8 @@
 </template>
 <script>
 import moment from "moment";
-window["$moment"] = moment;
 import Inputmask from "inputmask";
 import { empty } from "~/utils";
-
 
 export default {
     name: "WpDateInput",
@@ -48,13 +49,34 @@ export default {
         type: {
             type: String,
             default: "datetime" /** date | datetime */
+        },
+        messages: {
+            type: String,
+            required: false
+        },
+        name: {
+            type: String,
+            required: false
+        },
+        readonly: {
+            type: Boolean,
+            required: false,
+            default: false
+        },
+        required: {
+            type: Boolean,
+            required: false,
+            default: false
         }
     },
     data(){
         return {
             menu: false,
             text: null,
-            valid: true
+            valid: true,
+            rules: {
+                empty: val => !empty(val) || "Это поле должно быть заполнено"
+            }
         };
     },
     mounted(){
@@ -70,16 +92,14 @@ export default {
         /** for picker */
         date: {
             get(){
-                if (empty(this.text)){
-                    return null;
-                }
                 const m = moment(this.text, this.mask);
-                console.log('get', m);
-                return m.isValid() ? m.toISOString() : null;
+                return ( !empty(this.text)&&m.isValid() ) ? m.toISOString() : null;
             },
             set(dt){
-                console.log('set dt', dt);
-                if ( !empty(dt) ){
+                if (this.readonly){
+                    return;
+                }
+                if (!empty(dt)){
                     this.text = moment(dt, "YYYY-MM-DD").format(this.mask);
                 }
                 this.menu = false;
@@ -96,6 +116,10 @@ export default {
                 this.$emit('change', _empty ? null : m.toDate() );
             }
             return this.valid;
+        },
+        reset(){
+            this.text = null;
+            this.valid = true;
         }
     },
     watch: {

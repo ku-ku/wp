@@ -245,12 +245,16 @@ export default {
             errs: {}
         };
     },
-    computed: mapState({
-        statuses:  state => state.data.statuses,
-        divisions: state => state.data.divisions,
-        employees: state => state.data.employees,
-        places:    state => state.data.places
-    }),
+    computed: {
+                divisions(){
+                    return this.$store.getters["data/divisions"];
+                },
+                ...mapState({
+                    statuses:  state => state.data.statuses,
+                    employees: state => state.data.employees,
+                    places:    state => state.data.places
+                })
+    },
     methods: {
         async use(item){
             this.errs = {};

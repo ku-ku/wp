@@ -46,13 +46,21 @@ const lookup = async addr => {
     });
 };   //lookup
 
-const gen_days = (at = new Date() )=>{
-  const d = $moment([at.getFullYear(), at.getMonth(), 1]);
+const gen_days = (at = new Date(), end = null )=>{
+  const d = (end) ? $moment(at) : $moment([at.getFullYear(), at.getMonth(), 1]);
   const res = [];
-  while ( at.getMonth()===d.get('month') ){
-      res.push( d.clone() );
-      d.add(1, 'days');
-  }
+  if (end){
+    var end = $moment(end);
+    while ( d.isBefore(end) ){
+        res.push( d.clone() );
+        d.add(1, 'days');
+    }
+  } else {
+    while ( at.getMonth()===d.get('month') ){
+        res.push( d.clone() );
+        d.add(1, 'days');
+    }
+  }  
   return res;
 };  //_gen_days
 

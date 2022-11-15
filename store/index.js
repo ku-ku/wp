@@ -27,7 +27,7 @@ export const mutations = {
             const { period } = payload;
             state.period = {
                 start: $moment(period.start),
-                end: $moment(period.end)
+                end: $moment(period.end).add(1, "days").add(-1, 'seconds')
             };
         } else {
             Object.keys(payload).map( k=>{

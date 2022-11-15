@@ -70,6 +70,7 @@
                ref="dlgAct" :mode="DIA_MODES.action" />
     <wp-dialog v-if="dialog"
                ref="dlgRed" :mode="DIA_MODES.reday" />
+    <wp-dates ref="dates" />
   </v-app>
 </template>
 
@@ -82,6 +83,7 @@ $moment.locale("ru");
 import WpBar from '~/components/WpBar.vue';
 import WpDialog from '~/components/WpDialog.vue';
 import WpAuthBtn from '~/components/WpAuthBtn.vue';
+import WpDates from '~/components/WpDates.vue';
 
 import { DIA_MODES, gen_days } from '~/utils';
 
@@ -124,66 +126,84 @@ export default {
     doimp(){
       this.$router.replace({path: '/calendar', query: {imp: (new Date()).getTime()}});
     },
-    doreport(){
-        const p = this.$store.getters['period'];
-        const days = gen_days(p.start.toDate()),
-              all  = this.$store.getters['data/all'];
+    async doreport(){
+        const p = await this.$refs["dates"].open();
+        if (!p){
+            return;
+        }
         
-        const data = {
-            start: p.start.format('DD.MM.YYYY'),
-            end:   p.end.format('DD.MM.YYYY'),
-            days:  days.map( d => {
-                const day = {
-                    day: {
-                        date: d.toISOString(),
-                        day: d.format('DD dddd')
+        this.$store.commit("set", {period: p});
+        this.$store.commit("data/set", {acts: null, reds: null});
+        
+        try {
+            
+            const days = gen_days(p.start, p.end);
+            p.start = $moment(p.start);
+            p.end   = $moment(p.end).add(1, 'days').add(-1, 'seconds');
+            
+            const all = [...await this.$store.dispatch("data/list", "acts")],
+                  reds= [...await this.$store.dispatch("data/list", "reds")];
+
+            console.log('reporting by per', p, all, reds);
+
+            const data = {
+                start: p.start.format('DD.MM.YYYY'),
+                end:   p.end.format('DD.MM.YYYY'),
+                days:  days.map( d => {
+                    const day = {
+                        day: {
+                            date: d.toISOString(),
+                            day: d.format('DD dddd')
+                        },
+                        reds: reds.filter(a => (1==a.UF_RED && d.isSame(a.UF_ADT, 'day') )).map( a=> {
+                            return {
+                                id: a.ID,
+                                name: a.UF_TEXT
+                            };
+                        }),
+                        acts: all.filter(a => (1!=a.UF_RED && d.isSame(a.UF_ADT, 'day') ))
+                                  .map( a => {
+                                      a.at = $moment(a.UF_ADT);
+                                      return a;
+                                  })
+                                  .sort( (d1, d2) => {
+                                        return (1==d1.UF_DAYATTR) ? 1 : d1.at.isBefore(d2.at) ? -1 : d1.at.isAfter(d2.at) ? 1 : 0;
+                                  }).map( a => {
+                                      return {
+                                          id: a.ID,
+                                          tm: (1==a.UF_DAYATTR) ? ' ' : a.at.format("HH:mm"),
+                                          name: a.UF_TEXT,
+                                          place: a.UF_PLACE,
+                                          chief: a.CHIEF_NAME,
+                                      };
+                                  })
+                    };
+                    return day;
+                })
+            };
+
+            $.ajax({
+                    url: `${ $nuxt.context.env.apiUrl }/exp-doc.php`,
+                    type: "POST",
+                    contentType: 'application/json',
+                    processData: false,
+                    data: JSON.stringify(data),
+                    xhrFields: {
+                        responseType: 'blob' 
                     },
-                    reds: all.filter(a => (1==a.UF_RED && d.isSame(a.UF_ADT, 'day') )).map( a=> {
-                        return {
-                            id: a.ID,
-                            name: a.UF_TEXT
-                        };
-                    }),
-                    acts: all.filter(a => (1!=a.UF_RED && d.isSame(a.UF_ADT, 'day') ))
-                              .map( a => {
-                                  a.at = $moment(a.UF_ADT);
-                                  return a;
-                              })
-                              .sort( (d1, d2) => {
-                                    return (1==d1.UF_DAYATTR) ? 1 : d1.at.isBefore(d2.at) ? -1 : d1.at.isAfter(d2.at) ? 1 : 0;
-                              }).map( a => {
-                                  return {
-                                      id: a.ID,
-                                      tm: (1==a.UF_DAYATTR) ? ' ' : a.at.format("HH:mm"),
-                                      name: a.UF_TEXT,
-                                      place: a.UF_PLACE,
-                                      chief: a.CHIEF_NAME,
-                                  };
-                              })
-                };
-                return day;
-            })
-        };
-        console.log('all', data);
-        
-        $.ajax({
-                url: `${ $nuxt.context.env.apiUrl }/exp-doc.php`,
-                type: "POST",
-                contentType: 'application/json',
-                processData: false,
-                data: JSON.stringify(data),
-                xhrFields: {
-                    responseType: 'blob' 
-                },
-                cache: false,
-                success: resp => {
-                    const blob = new Blob([resp], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
-                    const downloadUrl = URL.createObjectURL(blob);
-                    window.location.href = downloadUrl;
-                }
-        }).catch( e => {
+                    cache: false,
+                    success: resp => {
+                        const blob = new Blob([resp], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+                        const downloadUrl = URL.createObjectURL(blob);
+                        window.location.href = downloadUrl;
+                    }
+            }).catch( e => {
+                console.log('ERR (report)', e);
+            });
+        } catch(e){
             console.log('ERR (report)', e);
-        });
+            $nuxt.msg({text:"Ошибка формирования отчета, попробуйте еще раз", color: "warning"});
+        }
     }   //doreport
   }
 }
