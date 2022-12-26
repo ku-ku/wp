@@ -384,10 +384,13 @@ export default {
                     return (!dvs)||(dvs.ID < 1)||(e.red)||(e.dvs==dvs.ID);
                 });
                 
-                if (!!at){
-                    var at = $moment(at).format('YYYYMMDD');
-                    return events.filter( e => at===e.adt.format('YYYYMMDD')).sort( (e1, e2) => {
-                        if (e1.dayattr){
+                const _sorting = (e1, e2) => {
+                        if (e1.red) {
+                            if (e2.red){
+                                return e1.name.localeCompare(e2.name);
+                            }
+                            return -1;
+                        } if (e1.dayattr){
                             return 1;
                         } else if (e2.dayattr){
                             return -1;
@@ -396,9 +399,13 @@ export default {
                                 e1.adt.isSame(e2.adt) 
                                     ? e1.dvsort - e2.dvsort
                                     : 1;
-                    });
+                };  //_sorting
+                
+                if (!!at){
+                    var at = $moment(at).format('YYYYMMDD');
+                    return events.filter( e => at===e.adt.format('YYYYMMDD')).sort( _sorting );
                 }
-                return events;
+                return events.sort( _sorting );
             } else {
                 return [];
             }

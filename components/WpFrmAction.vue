@@ -369,6 +369,13 @@ export default {
         },
         async save(){
             console.log('saving', this.item);
+            if (this.$fetchState?.pending){
+                return;
+            }
+            this.$fetchState = {
+                pending: true,
+                timestamp: Date.now()
+            };
             try {
                 this.item.UF_ADT = $moment(this.item.UF_ADT).toDate();
                 await this.$store.dispatch("data/upd", {acts: this.item});
@@ -377,17 +384,16 @@ export default {
                     this.fixfix();
                 }
             } catch(e){
+                this.$fetchState = {
+                    error: e
+                };
                 this.$emit("error", e);
+            } finally {
+                this.$fetchState.pending = false;
             }
             return false;
         }   //save
-        
-    },   //methods
-    watch: {
-        division(val){
-            console.log('division:', val);
-        }
-    }
+    }   //methods
 }
 </script>
 <style lang="scss">
