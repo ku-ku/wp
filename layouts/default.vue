@@ -182,11 +182,12 @@ export default {
                         acts: all.filter(a => (1!=a.UF_RED && d.isSame(a.UF_ADT, 'day') ))
                                   .map( a => {
                                       a.at = $moment(a.UF_ADT);
-                                      var n = dvss.findIndex( d => d.ID == a.UF_DVS);
-                                      a.dsort = (n < 0) ? 9999999 : d.sort;
+                                      var n = dvss.findIndex( dvs => dvs.ID == a.UF_DVS);
+                                      a.dsort = (n < 0) ? 9999999 : dvss[n].sort;
                                       return a;
                                   })
                                   .sort( (d1, d2) => {
+                                      
                                         return (1==d1.UF_DAYATTR) 
                                                     ? 1 
                                                     : d1.at.isBefore(d2.at) 

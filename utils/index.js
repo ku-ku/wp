@@ -1,6 +1,7 @@
 const NULL_ID = "00000000-0000-0000-0000-000000000000";
 import $moment from "moment";
 $moment.locale("ru");
+window["$moment"] = $moment;
 
 
 const MODES = {

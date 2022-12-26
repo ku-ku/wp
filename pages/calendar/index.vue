@@ -38,7 +38,8 @@
                   label="Вид"
                   style="max-width:14rem;">
             <template v-slot:selection="{ item }">
-                {{ item.id === 'day' ? item.name + ' ' + get('day') : item.name}}
+                {{ item.id === 'day' ? item.name + ': ' + get('day') 
+                                     : item.name + ': ' + get('month')}}
             </template>
         </v-select>
         <v-btn color="secondary lighten-3"
@@ -291,6 +292,8 @@ export default {
             switch(q){
                 case 'day':
                     return $moment(this.value).format('DD.MM.YYYY');
+                case 'month':
+                    return $moment(this.period.start).format('MMMM');
                 case 'today':
                     return $moment().format('DD.MM.YYYY');
                 case 'event':
