@@ -266,11 +266,16 @@ export default {
                 this.item = Array.isArray(resp) ? resp[0] : {};
                 this.item.UF_STATUS = Number(this.item.UF_STATUS);
             } else {
-                console.log('fixed', FIX_ITEM.fixed);
                 if (!item.UF_ADT){
                     item.UF_ADT = new Date();
                 }
                 item.UF_DVS = this.$store.state.data.division?.ID;
+                if (FIX_ITEM.fixed){
+                    if (item.UF_DVS != FIX_ITEM.UF_DVS){
+                        FIX_ITEM.fixed = false; //reset on DVS-changed
+                        this.$emit("defix");
+                    }
+                }
                 //restore saved value`s
                 if (FIX_ITEM.fixed){
                     item.UF_DVS  = FIX_ITEM.UF_DVS;
@@ -377,7 +382,12 @@ export default {
             return false;
         }   //save
         
-    }   //methods
+    },   //methods
+    watch: {
+        division(val){
+            console.log('division:', val);
+        }
+    }
 }
 </script>
 <style lang="scss">

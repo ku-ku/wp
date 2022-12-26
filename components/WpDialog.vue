@@ -22,6 +22,7 @@
             <v-card-text class="pt-5">
                 <component v-bind:is="component"
                            ref="form"
+                           v-on:defix="fixed = false"
                            v-on:success="success">
                 </component>
             </v-card-text>
