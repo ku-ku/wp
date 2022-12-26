@@ -65,11 +65,30 @@ const gen_days = (at = new Date(), end = null )=>{
 };  //_gen_days
 
 
+
+const shorting = name => {
+    if ( empty(name) ){
+        return "";
+    }
+    var s;
+    try {
+        const a = name.trim().split(/\s{1,}/g);
+        a.forEach( (w, n) => {
+            s = (n===0) ? w + " " : s + w.charAt(0) + ".";
+        });
+    } catch(e){
+        s = name;
+    }
+    return s;
+};
+
+
 export {
     NULL_ID,
     MODES,
     DIA_MODES,
     empty,
     lookup,
-    gen_days
+    gen_days,
+    shorting
 };

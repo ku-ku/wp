@@ -44,7 +44,7 @@ foreach($info->days as $day){
         $row->addCell(2655)->addText($a->name);
         $row->addCell(595)->addText($a->place);
         $row->addCell(695)->addText($a->chief);
-        $row->addCell(695); //->addText($a->CHIEF_NAME);
+        $row->addCell(695)->addText($a->emps);
     }
 }
 

@@ -398,33 +398,39 @@ function acts($params = false){
                     "UF_CHIEF"    => $item["UF_CHIEF"],
                     "UF_STATUS"   => $item["UF_STATUS"],
                     "UF_COMMENTS" => $item["UF_COMMENTS"],
-                    "UF_AUTHOR"   => 10, //$USER->GetID(),
+                    "UF_AUTHOR"   => 10,
                     "UF_INSTIME"  => new Bitrix\Main\Type\DateTime()
                 );
                 
                 $res = $entity->save($row);
+                
                 if ($res["success"]){
                     //save add's
                     $id = $res["item"][0]["ID"];
-                    $adds = new CHLBTAdds("HEADS", $id);
-                    $adds->addAll($item["HEADS"]);
-                    $adds = new CHLBTAdds("EMPS", $id);
-                    $adds->addAll($item["EMPS"]);
+                    
+                    $adds1 = new CHLBTAdds("HEADS", $id);
+                    $a1 = $adds1->addAll($item["HEADS"]);
+                    
+                    $adds2 = new CHLBTAdds("EMPS", $id);
+                    $a2 = $adds2->addAll($item["EMPS"]);
                     
                     $res["item"] = acts( array("ID" => $id) );
                 }
+                
                 break;
             case "del":
                 $res = $entity->del( intval($params['ID']) );
                 break;
         }
     } else {
+        $fully= ($params !== false)&&(1==$params["fully"]);
+        $byId = (!!$params) && (intval($params["ID"])>0);
+        
         $dirs = new stdClass();
         $dirs->users= array_slice(users(false), 0);
         $dirs->emps = array_slice(employees(false), 0);
         $dirs->dvss = array_slice(divisions(false), 0);
         $args = array( 'select' => array('*') );
-        $byId = (!!$params) && (intval($params["ID"])>0);
         if ( $byId ) {
             $args['filter'] = array('=ID' => $params["ID"]);
         } else {
@@ -452,6 +458,7 @@ function acts($params = false){
                 foreach ($dirs->dvss as $_d){
                     if ($el["UF_DVS"] == $_d["ID"]){
                         $el["DVS_NAME"] = $_d["UF_NAME"];
+                        $el["DVS_CODE"] = $_d["UF_CODE"];
                         break;
                     }
                 }
@@ -467,8 +474,9 @@ function acts($params = false){
             $el["UF_ADT"] = (!!$el["UF_ADT"]) ? $el["UF_ADT"]->getTimestamp()*1000 : null;
             $el["UF_INSTIME"] = (!!$el["UF_INSTIME"]) ? $el["UF_INSTIME"]->getTimestamp()*1000 : null;
             
-            //add's by id only load (optimize)
-            if ($byId){
+            //add's by id only or fully load (optimize)
+            if ( $byId || $fully ){
+                
                 if (!!$el["UF_AUTHOR"]){
                     foreach ($dirs->users as $_u){
                         if ($el["UF_AUTHOR"] == $_u["ID"]){
@@ -480,9 +488,33 @@ function acts($params = false){
 
                 $adds = new CHLBTAdds("HEADS", $id);
                 $el["HEADS"] = $adds->list();
+                
+                $heads = array();
+                foreach($el["HEADS"] as $_id){
+                    foreach ($dirs->emps as $_e){
+                        if ($_id == $_e["ID"]){
+                            $heads[] = $_e["UF_EMPNAME"];
+                            break;
+                        }
+                    }
+                }
+                $el["HEADNAMES"] = $heads;
+                
 
-                $adds = new CHLBTAdds("EMPS", $id);
-                $el["EMPS"] = $adds->list();
+                $adds2 = new CHLBTAdds("EMPS", $id);
+                $el["EMPS"] = $adds2->list();
+                
+                $emps = array();
+                foreach($el["EMPS"] as $_id){
+                    foreach ($dirs->emps as $_e){
+                        if ($_id == $_e["ID"]){
+                            $emps[] = $_e["UF_EMPNAME"];
+                            break;
+                        }
+                    }
+                }
+                $el["EMPNAMES"] = $emps;
+                
             }
             
             $res[] = $el;

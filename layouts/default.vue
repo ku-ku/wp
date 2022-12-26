@@ -85,7 +85,11 @@ import WpDialog from '~/components/WpDialog.vue';
 import WpAuthBtn from '~/components/WpAuthBtn.vue';
 import WpDates from '~/components/WpDates.vue';
 
-import { DIA_MODES, gen_days } from '~/utils';
+import { DIA_MODES, gen_days, empty, shorting } from '~/utils';
+
+
+
+
 
 export default {
   name: 'DefaultLayout',
@@ -132,20 +136,34 @@ export default {
             return;
         }
         
-        this.$store.commit("set", {period: p});
-        this.$store.commit("data/set", {acts: null, reds: null});
-        
         try {
             
             const days = gen_days(p.start, p.end);
             p.start = $moment(p.start);
             p.end   = $moment(p.end).add(1, 'days').add(-1, 'seconds');
             
-            const all = [...await this.$store.dispatch("data/list", "acts")],
-                  reds= [...await this.$store.dispatch("data/list", "reds")];
-
-            console.log('reporting by per', p, all, reds);
-
+            
+            const opts = {
+                    url: $nuxt.context.env.apiUrl,
+                    data: {
+                        q: "acts",
+                        params: {
+                                    fully: 1,
+                                    period: {
+                                        start: p.start.toISOString(),
+                                        end: p.end.toISOString()
+                                    }
+                        }
+                    },
+                    dataType: "json"
+            };
+            
+            const all = await $.ajax(opts);
+            
+            opts.data.q = "reds";
+            const reds= await $.ajax(opts);
+            const dvss= this.$store.getters["data/divisions"]||[];
+            
             const data = {
                 start: p.start.format('DD.MM.YYYY'),
                 end:   p.end.format('DD.MM.YYYY'),
@@ -164,17 +182,42 @@ export default {
                         acts: all.filter(a => (1!=a.UF_RED && d.isSame(a.UF_ADT, 'day') ))
                                   .map( a => {
                                       a.at = $moment(a.UF_ADT);
+                                      var n = dvss.findIndex( d => d.ID == a.UF_DVS);
+                                      a.dsort = (n < 0) ? 9999999 : d.sort;
                                       return a;
                                   })
                                   .sort( (d1, d2) => {
-                                        return (1==d1.UF_DAYATTR) ? 1 : d1.at.isBefore(d2.at) ? -1 : d1.at.isAfter(d2.at) ? 1 : 0;
+                                        return (1==d1.UF_DAYATTR) 
+                                                    ? 1 
+                                                    : d1.at.isBefore(d2.at) 
+                                                        ? -1 
+                                                        : d1.at.isAfter(d2.at) 
+                                                            ? 1 
+                                                            : d1.dsort < d2.dsort ? -1 : 1;
                                   }).map( a => {
+                                      
+                                      const hdrs = [shorting(a.CHIEF_NAME)];
+                                      a.HEADNAMES.forEach( name => {
+                                          var name = shorting(name);
+                                          if ( hdrs.findIndex(e => e==name) < 0 ){
+                                            hdrs.push(name);
+                                          }
+                                      });
+                                      const emps = [];
+                                      a.EMPNAMES.forEach( name => {
+                                          var name = shorting(name);
+                                          if ( emps.findIndex(e => e==name) < 0 ){
+                                            emps.push(name);
+                                          }
+                                      });
+
                                       return {
                                           id: a.ID,
                                           tm: (1==a.UF_DAYATTR) ? ' ' : a.at.format("HH:mm"),
                                           name: a.UF_TEXT,
                                           place: a.UF_PLACE,
-                                          chief: a.CHIEF_NAME,
+                                          chief: hdrs.join(", "),
+                                          emps:  emps.join(", ")
                                       };
                                   })
                     };

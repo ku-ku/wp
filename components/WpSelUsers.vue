@@ -53,7 +53,9 @@ export default {
     },
     computed: {
         employees(){
-            const re = empty(this.search) ? null : new RegExp(`(${ this.search })+`, 'gi');
+            const re = ( empty(this.search) || (this.search.length<3) ) 
+                            ? null 
+                            : new RegExp(`(${ this.search.replace(/\.+/g, '') })+`, 'gi');
             
             return [...this.$store.state.data.employees || []].map(e =>{
                 e.seached = (re) ? re.test(e.UF_EMPNAME) : false;
@@ -94,6 +96,7 @@ export default {
             this.search = null;
             this.selected = Array.isArray(items) ? items : [];
             this.needs('info', this.names);
+            this.needs('searchable', true);
         },
         validate(){
             return true;

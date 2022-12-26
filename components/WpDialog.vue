@@ -11,6 +11,7 @@
                 <v-icon small>{{has('add') ? 'mdi-plus':'mdi-file-document-edit'}}</v-icon>&nbsp;
                 {{ title() }}
                 <wp-search-field v-if="needs.searchable" 
+                                 ref="searchfi"
                                  class="ml-3"
                                  v-on:filter="onsearch" />
                 <v-spacer />
@@ -161,6 +162,12 @@ export default {
             this.show = (new Date()).getTime();
             f.use(item);
             this.fAdd = f.has('add');
+            this.$nextTick(()=>{
+                const s = this.$refs["searchfi"];
+                if ( s ){
+                    s.reset();
+                }
+            });
         },
         save(){
             const f = this.$refs["form"];

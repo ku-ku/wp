@@ -25,6 +25,7 @@
                                no-title
                                locale="ru-ru"
                                scrollable
+                               first-day-of-week="1"
                                @input="menu = false">
                 </v-date-picker>
             </v-menu>
