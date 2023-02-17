@@ -222,5 +222,6 @@ export const getters = {
         }) || []).sort( (d1, d2) => {
             return d1.sort < d2.sort ? -1 : d1.sort > d2.sort ? 1 : 0;
         });
-    }
+    },
+    staffing: state => state.staffing
 };

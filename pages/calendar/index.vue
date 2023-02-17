@@ -1,66 +1,10 @@
 <template>
 <div>
-    <v-toolbar class="wp-calendar-bar"
-               dense
-               fixed
-               elevation="2">
-        <v-tooltip v-if="(type!='month')"
-                   bottom>
-            <template v-slot:activator="{ on, attrs }">
-                <v-btn class="ma-2"
-                       plain
-                       v-on="on"
-                       @click="type='month'">
-                    <v-icon>mdi-chevron-double-left</v-icon>
-                </v-btn>
-            </template>
-            <span>Вернуться в календарь</span>
-        </v-tooltip>
-        <v-btn icon
-            class="mr-2"
-            v-on:click="prev">
-            <v-icon>mdi-chevron-left</v-icon>
-        </v-btn>
-        <v-btn outlined dark color="secondary lighten-3"
-               style="width:8rem;"
-               v-on:click="gotoday">
-            {{get('today')}}
-            <div class="text-muted">сегодня</div>
-        </v-btn>
-        <v-select v-model="type"
-                  :items="types"
-                  item-text="name"
-                  item-value="id"
-                  dense
-                  outlined
-                  hide-details
-                  class="mx-2"
-                  label="Вид"
-                  style="max-width:14rem;">
-            <template v-slot:selection="{ item }">
-                {{ item.id === 'day' ? item.name + ': ' + get('day') 
-                                     : item.name + ': ' + get('month')}}
-            </template>
-        </v-select>
-        <v-btn color="secondary lighten-3"
-               icon
-               v-on:click="_fetch()">
-            <v-icon v-bind:class="{'mdi-spin': loading}">mdi-refresh</v-icon>
-        </v-btn>
-        <v-spacer></v-spacer>
-        <v-btn
-            icon
-            class="ma-2"
-            @click="next">
-            <v-icon>mdi-chevron-right</v-icon>
-        </v-btn>        
-    </v-toolbar>
     <div class="wp-calendar-conte">
         <template v-if="('month'===type)">
             <v-calendar locale="ru" 
                         ref="calendar"
                         v-model="value"
-                        class="mt-3"
                         color="primary"
                         :events="events()"
                         :type="type"
@@ -74,12 +18,12 @@
                 <template v-slot:event="{ event }">
                     <v-tooltip bottom
                                max-width="720"
-                               content-class="event-details"
-                               :color="event.color">
+                               :color="event.red ? 'red' : 'primary'"
+                               content-class="event-details">
                         <template v-slot:activator="{ on, attrs }">
                             <div v-html="get('title', event)" 
                                  v-on="on"
-                                 v-bind:class="{'red-day': event.red, 'not-complete': !event.ready}">
+                                 v-bind:class="event.class">
                             </div>
                         </template>    
                         <span v-html="event.title"></span>
@@ -129,21 +73,24 @@
                 </template>
             </v-calendar>
         </template>
-        <template v-else>
+        <div v-else class="wp-calendar-conte">
             <v-data-table
                       class="events-table"
+                      item-key="id"
                       :headers="headers"
                       :items="events(value)"
+                      :loading="loading"
                       single-select
                       disable-pagination
-                      item-key="id"
                       disable-sort
                       hide-default-footer
                       dense
                       :value="selected"
                       v-on:click:row="selected = [$event]"
                       v-on:dblclick:row="($event, item)=>edit({event: item.item})"
-                      no-data-text="нет данных">
+                      no-data-text="нет данных"
+                      locale="ru-RU"
+                      ref="table">
                     <template v-slot:header.actions>
                         <div class="text-center"><v-icon>mdi-dots-vertical</v-icon></div>
                     </template>
@@ -180,8 +127,8 @@
                        v-on:click="addAction">
                     <v-icon small>mdi-plus</v-icon>
                 </v-btn>
-        </template>
-    </div>    
+        </div>
+    </div>
     <wp-dialog v-if="dialog"
                ref="dlgAct" :mode="DIA_MODES.action" 
                v-on:change="_fetch" />
@@ -199,21 +146,29 @@ import { DIA_MODES } from "~/utils";
 const WP_SETTS_KEY = "_wp_settings";
 
 const _TB_HEADERS = [
-    { text: 'Дата, время', value: 'adt', width: "auto"},
+    { text: 'Дата, время', value: 'adt', width: "8rem"},
     { text: 'Мероприятие', value: 'name' },
     { text: 'Готов/www',   value: 'ready', width: "1rem"},
     { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
 ];
 
+let _on = null; 
+
 export default {
     name: 'WpCalendar',
     fetchOnServer: false,
+    async asyncData({store}){
+        //preload data
+        try {
+            await store.dispatch("data/list", "divisions");
+        } catch(e){
+            console.log("ERR (data)", e);
+        }
+    },
     data(){
         return {
             DIA_MODES,
             loading: false,
-            value: '',
-            type: 'month',
             types: [{name: 'Месяц', id:'month'}, {name:'День', id:'day'}],
             all: null,
             dialog: false,
@@ -222,7 +177,34 @@ export default {
         };
     },
     created(){
+        console.log('calendar', this);
         $nuxt.hidextras();
+        if (!_on){
+            $nuxt.$off('calendar');
+        }
+        _on = $nuxt.$on('calendar', e => {
+                console.log('calendar', e);
+                switch(e.type){
+                    case 'month':
+                        this.type = 'month';
+                        break;
+                    case 'prev':
+                        this.prev();
+                        break;
+                    case 'today':
+                        this.gotoday();
+                        break;
+                    case 'refresh':
+                        this.$store.commit("data/set", {acts: null, reds: null});
+                        this.all = null;
+                        this.$nextTick(()=>{ this._fetch(); });
+                        break;
+                    case 'next':
+                        this.next();
+                        break;
+                }
+                return false;
+        });
         try {
             var setts = window.localStorage.getItem(WP_SETTS_KEY);
             if (setts){
@@ -256,17 +238,37 @@ export default {
     computed: {
         ...mapState({
             period: state => state.period,
-            division: state => state.data.division,
-            divisions: state => state.data.divisions
+            division: state => state.data.division
         }),
+        divisions(){
+            return this.$store.getters['data/divisions'];
+        },
         imp(){
             return this.$route.query.imp;
+        },
+        type: {
+            get(){
+                return this.$store.state.period.type || 'month';
+            },
+            set(val){
+                this.$store.commit("set", {period: {type: val || 'month'}});
+            }
+        },
+        value: {
+            get(){
+                return this.$store.state.period.work.toDate();
+            },
+            set(val){
+                console.log('value', val);
+                this.$store.commit("set", {period: {work: val}});
+            }
         }
     },
     methods:{
         moment: $moment,
         _fetch(){
             this.loading = true;
+            this.$nuxt.$loading.start();
             var acts = [];
             
             const _get = async q => {
@@ -282,12 +284,13 @@ export default {
                     } else {
                         this.all = acts;
                         this.loading = false;
+                        this.$nuxt.$loading.finish();
                     }
                 }
             };  //_get
-            
             _get("acts");
         },
+        
         get(q, v){
             switch(q){
                 case 'day':
@@ -310,7 +313,8 @@ export default {
         },
         gotoday(){
             this.type = 'day';
-            this.$nextTick( ()=> this.value=new Date() );
+            this.value=new Date();
+            this.$forceUpdate();
         },
         change({start, end}){
             this.$store.commit("set", { period: {
@@ -328,54 +332,59 @@ export default {
         events(at){
             const _FMT = "YYYY-MM-DD HH:mm:ss";
             if (!!this.all){
-                const colors = ['blue', 'indigo', 'brown', 'cyan', 'green', 'orange', 'teal darken-3'];
-                const _color = ()=>{
-                    return colors[Math.floor((colors.length + 1) * Math.random())];
-                };
                 const dvs = this.division,
-                     dvss = this.divisions;
+                     dvss = this.divisions || [];
              
                 const events =  this.all.map( a => {
                     const e = {
                         id:      a.ID,
                         adt:     $moment(a.UF_ADT),
                         name:    a.UF_TEXT,
-                        color:   (1 == a.UF_RED) ? "" : _color(),
                         timed:   !!a.UF_DAYATTR,
                         red:     (1 == a.UF_RED),
                         ready:   (1 == a.UF_READY),
                         dvs:     a.UF_DVS,
                         dayattr: (1 == a.UF_DAYATTR),
-                        www:     (1 == a.UF_WWWATTR)
+                        www:     (1 == a.UF_WWWATTR),
+                        "class": (1 == a.UF_RED) ? "red-day" : "action"
                     };
-                    e.start= e.adt.format(_FMT);
                     e.time = e.adt.format("HH:mm");
+                    
+                    if (e.dayattr){
+                        e.adt.set({hour:23, minute:59, second: 59});    //downshift
+                    } else if (e.red){
+                        e.adt.set({hour:0, minute:0, second: 0});      //up
+                    }
+                    e.start= e.adt.format(_FMT);
+                    
                     e.title = e.name;
-                    if ( ("00:00" !== e.time)&& !e.dayattr ){
+                    if ( !e.red && ("00:00" !== e.time) ){
                         e.title += `<div class="time">${ e.time }</div>`;
-                    } else if (!e.red) {
+                    } else if ((!e.red) && (e.dayattr)) {
+                        e.title += '<div class="time">дн.</div>';
                         //TODO: nax? e.start = $moment(a.UF_ADT).add(9, 'hours').format(_FMT);
                     }
+                    
                     if ( 
                             (!e.red)
                          && (!e.ready)
                        ) {
-                             e.color = 'grey darken-1';
+                        e.class = 'not-ready';
                     } else if (e.dayattr){
-                        e.color = 'primary';
+                        e.class = 'allday';
                     }
                     
-                    if (
-                            (e.dvs)
-                        &&  (dvss) 
-                        ) {
-                        const n = dvss.findIndex( d => (d.ID == e.dvs) );
+                    if ((!e.red) && (!!e.dvs)) {
+                        const n = dvss.findIndex( d => d.ID == e.dvs );
                         if ( n < 0 ){
                             e.dvsort = 9999999;
                             e.dvsname = null;
                         } else {
                             e.dvsort = dvss[n].sort;
                             e.dvsname= dvss[n].UF_NAME;
+                            if ( /^1+/.test(dvss[n].UF_CODE) ){
+                                e.class = 'head';
+                            }
                         }
                     } else {
                         e.dvsort = 9999999;
@@ -393,15 +402,11 @@ export default {
                                 return e1.name.localeCompare(e2.name);
                             }
                             return -1;
-                        } if (e1.dayattr){
-                            return 1;
-                        } else if (e2.dayattr){
-                            return -1;
                         }
-                        return e1.adt.isBefore(e2.adt) ? -1 : 
-                                e1.adt.isSame(e2.adt) 
-                                    ? e1.dvsort - e2.dvsort
-                                    : 1;
+                       
+                        return e1.adt.isSame(e2.adt) 
+                                    ? e1.dvsort < e2.dvsort ? -1 : 1
+                                    : e1.adt.isBefore(e2.adt) ? -1 : 1;
                 };  //_sorting
                 
                 if (!!at){
@@ -476,9 +481,13 @@ export default {
                 this.$router.replace({name: 'calendar', query:{}});
             }
         },
+        _to_top(){
+            $(this.$el).find(".wp-calendar-conte").animate({ scrollTop: 0 }, "fast");
+        },
         viewDay({ date }){
             this.value = date;
             this.type = 'day';
+            this.$nextTick(this._to_top);
         },
         sel(event){
             console.log('sel', event);
@@ -488,14 +497,18 @@ export default {
             if (this.$refs.calendar){
                 this.$refs.calendar.prev();
             } else {
-                this.value = $moment(this.value).add(-1, 'day').toDate();
+                const d = this.$store.state.period.work.clone();
+                this.$store.commit("set", {period: {work: d.add(-1, 'day')}});
+                this.$nextTick(this._to_top);
             }
         },
         next(){
             if (this.$refs.calendar){
                 this.$refs.calendar.next();
             } else {
-                this.value = $moment(this.value).add(1, 'day').toDate();
+                const d = this.$store.state.period.work.clone();
+                this.$store.commit("set", {period: {work: d.add(1, 'day')}});
+                this.$nextTick(this._to_top);
             }
         }
     },
@@ -509,31 +522,34 @@ export default {
 }
 </script>
 <style lang="scss">
-.v-toolbar.wp-calendar-bar {
-    & .v-btn{
-        &__content{
-            font-size: 0.85rem;
-            flex-direction: column;
-            line-height: 1.125;
-            color:var(--v-primary-base);
-            & .text-muted {
-                font-size: 0.55rem;
-            }
-        }
+.v-calendar{
+    height: 100%;
+    &.v-calendar-weekly{
+        min-height: 1900px !important;
     }
 }
 
-.v-calendar{
-    height: 100%;
-    min-height: 1900px;
-}
-
 .v-event, .v-event-timed {
+    & > *{
+        padding-left: 0.33rem;
+    }
+    & .action{
+        background: #fff;
+        color: var(--v-primary-base);
+    }
     & .red-day{
         background: #fff;
         color: $red-color;
     }
-    & .not-complete{
+    & .allday{
+        color: #0D47A1;
+        background: #fff;
+    }
+    & .head{
+        background: var(--v-primary-base);
+        color: #fff;
+    }
+    & .not-complete, .not-ready{
         background: var(--v-primary-lighten5);
     }
 }
@@ -571,6 +587,11 @@ export default {
         word-wrap: nowrap;
         white-space: nowrap;
     }
+    & td{ 
+        user-select: none;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+    }
     & .red-day {
         color: $red-color;
     }
@@ -581,8 +602,9 @@ export default {
         margin: 0.25rem 0;
     }
 }   /* v-data-table */
+
 .wp-calendar-conte{
     overflow-y: auto;
-    padding: 0 1rem;
+    padding: 0 1rem 8rem 1rem;
 }
 </style>

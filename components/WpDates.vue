@@ -60,8 +60,9 @@ export default {
     methods: {
         async open(){
             const p = this.$store.getters['period'];
-            this.start = p.start.toDate();
-            this.end   = p.end.toDate();
+            const d = new Date(p.start.year(), p.start.month());
+            this.start = d;
+            this.end   = $moment(d).add(1, 'month').add(-1, 'seconds').toDate();
             
             this.show = (new Date()).getTime();
             
@@ -92,6 +93,13 @@ export default {
                 this._r = null;
             }
             this.show = false;
+        }
+    },
+    watch: {
+        start(val){
+            var val = val || new Date();
+            const d = new Date(val.getFullYear(), val.getMonth());
+            this.end = $moment(d).add(1, 'month').add(-1, 'seconds').toDate();
         }
     }
 }

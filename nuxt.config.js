@@ -70,8 +70,17 @@ export default {
     }
   },
 
+  loadingIndicator: {
+    color: '#3b4256'
+  },
+
   build: {
     publicPath: isDev ? undefined : '//kubzsk.ru/wp/app/',
     postcss: null
+  },
+  
+  server: {
+      host: '0'
   }
+  
 }

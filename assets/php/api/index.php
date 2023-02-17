@@ -140,8 +140,14 @@ function divisions($params = false){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
-                unset($item["isTrusted"]);
-                $dvss->save($item);
+                $fields = array( 
+                    "ID" => $item["ID"],
+                    "UF_NAME" => $item["UF_NAME"],
+                    "UF_CODE" => $item["UF_CODE"],
+                    "UF_ACTIVE" => !!$item["UF_ACTIVE"] ? 1 : 0,
+                    "UF_SORT"   => intval($item["UF_SORT"])
+                );
+                $res = $dvss->save($fields);
                 break;
             case "del":
                 $dvss->del(intval($params['ID']));
@@ -467,6 +473,7 @@ function acts($params = false){
                 foreach ($dirs->emps as $_e){
                     if ($el["UF_CHIEF"] == $_e["ID"]){
                         $el["CHIEF_NAME"] = $_e["UF_EMPNAME"];
+                        $el["CHIEF"] = $_e;
                         break;
                     }
                 }
