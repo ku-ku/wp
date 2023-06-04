@@ -153,8 +153,7 @@ export default {
             return '';
         },
         _emit(q, val){
-            console.log('emitting', val);
-            $nuxt.$emit(q, val);
+            this.$eventHub.$emit(q, val);
             return false;
         }
     }

@@ -2,7 +2,8 @@
     <v-container>
         <v-row class="wp-auth fill-height" justify="center" align="center">
             <v-col cols="11" md="4">
-                <v-form v-on:submit.stop.prevent="onauth" action="#" v-model="valid">
+                <v-form v-on:submit.stop.prevent="onauth" 
+                        action="#" v-model="valid">
                     <v-card class="elevation-3">
                         <v-card-title>
                             <div class="form-icon">
@@ -100,11 +101,13 @@ export default {
         }
         this.error = '';
         const user = await $nuxt.api("auth", this.user);
-        this.$store.commit("data/set", { user });
-        if (user.id < 1){
-            throw {message: 'Not Authorized'};
+        if (user.id > 0){
+            this.$store.commit("data/set", { user });
+            this.user.id = user.id;
+        } else {
+            this.valid = false;
+            this.error = "Неверное имя пользователя или пароль";
         }
-        this.user.id = user.id;
     },
     methods: {
         has(q) {
@@ -126,9 +129,11 @@ export default {
             }
             try {
                 await this.$fetch();
-                setTimeout( () => {
-                    this.$router.replace({name: 'calendar'});
-                }, 500);
+                if (this.user.id > 0){
+                    setTimeout( () => {
+                        this.$router.replace({name: 'calendar'});
+                    }, 500);
+                }
             } catch(e) {
                 console.log('ERR (login)', e);
                 this.error = 'Логин или пароль неверный';

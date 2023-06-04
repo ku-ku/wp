@@ -157,6 +157,7 @@ let _on = null;
 export default {
     name: 'WpCalendar',
     fetchOnServer: false,
+    middleware: 'auth',
     async asyncData({store}){
         //preload data
         try {
@@ -177,12 +178,13 @@ export default {
         };
     },
     created(){
-        console.log('calendar', this);
         $nuxt.hidextras();
         if (!_on){
-            $nuxt.$off('calendar');
+            //$nuxt.$off('calendar');
+            this.$eventHub.$off('calendar');
         }
-        _on = $nuxt.$on('calendar', e => {
+        //$nuxt.$on
+        _on = this.$eventHub.$on('calendar', e => {
                 console.log('calendar', e);
                 switch(e.type){
                     case 'month':
@@ -235,6 +237,10 @@ export default {
             window.localStorage.setItem(WP_SETTS_KEY, JSON.stringify(setts));
         }catch(e){}
     },
+    beforeDestroy(){
+        this.$eventHub.$off('calendar');
+        _on = null;
+    },
     computed: {
         ...mapState({
             period: state => state.period,
@@ -268,7 +274,6 @@ export default {
         moment: $moment,
         _fetch(){
             this.loading = true;
-            this.$nuxt.$loading.start();
             var acts = [];
             
             const _get = async q => {
@@ -284,13 +289,11 @@ export default {
                     } else {
                         this.all = acts;
                         this.loading = false;
-                        this.$nuxt.$loading.finish();
                     }
                 }
             };  //_get
             _get("acts");
         },
-        
         get(q, v){
             switch(q){
                 case 'day':
@@ -499,6 +502,10 @@ export default {
             } else {
                 const d = this.$store.state.period.work.clone();
                 this.$store.commit("set", {period: {work: d.add(-1, 'day')}});
+                if (this.all?.length < 1){
+                    this._fetch();
+                }
+                
                 this.$nextTick(this._to_top);
             }
         },
@@ -508,6 +515,9 @@ export default {
             } else {
                 const d = this.$store.state.period.work.clone();
                 this.$store.commit("set", {period: {work: d.add(1, 'day')}});
+                if (this.all?.length < 1){
+                    this._fetch();
+                }
                 this.$nextTick(this._to_top);
             }
         }

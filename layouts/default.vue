@@ -137,7 +137,7 @@ export default {
             
             const days = gen_days(p.start, p.end);
             p.start = $moment(p.start);
-            p.end   = $moment(p.end).add(1, 'days').add(-1, 'seconds');
+            p.end   = $moment(p.end);        //.add(1, 'days').add(-1, 'seconds');
             
             
             const opts = {
@@ -181,22 +181,9 @@ export default {
                                   .map( a => {
                                       a.at = $moment(a.UF_ADT);
                                       var n = dvss.findIndex( dvs => dvs.ID == a.UF_DVS);
-                                      a.dsort = (n < 0) ? 9999999 : dvss[n].sort;
+                                      a.dsort = (n < 0) ? 9999999 : dvss[n].sort;               //sorting by division
                                       n = stfs.findIndex( stf => stf.ID == a.CHIEF?.UF_STAFF);
-                                      a.ssort = (n < 0) ? 9999999 : Number(stfs[n].UF_SORT);
-                                      return a;
-                                  })
-                                  .sort( (d1, d2) => {
-                                      
-                                        return (1==d1.UF_DAYATTR) 
-                                                    ? 1 
-                                                    : d1.at.isBefore(d2.at) 
-                                                        ? -1 
-                                                        : d1.at.isAfter(d2.at) 
-                                                            ? 1 
-                                                            : (d1.dsort == d2.dsort)
-                                                                ? d1.ssort - d2.ssort : d1.dsort - d2.dsort;
-                                  }).map( a => {
+                                      a.ssort = (n < 0) ? 9999999 : Number(stfs[n].UF_SORT);    //staff sorting
                                       
                                       const hdrs = [shorting(a.CHIEF_NAME)];
                                       a.HEADNAMES.forEach( name => {
@@ -205,6 +192,8 @@ export default {
                                             hdrs.push(name);
                                           }
                                       });
+                                      a.hdrs = hdrs.join(',\n');
+                                      
                                       const emps = [];
                                       a.EMPNAMES.forEach( name => {
                                           var name = shorting(name);
@@ -212,14 +201,29 @@ export default {
                                             emps.push(name);
                                           }
                                       });
+                                      a.emps = emps.join(',\n');
+                                      
+                                      a.sort = (a.UF_DAYATTR == 1) 
+                                                    ? Number.MAX_VALUE
+                                                    : (a.at.hours() * 100 + a.at.minutes()) * 10000000 + a.dsort;
+                                      
+                                      return a;
+                                  })
+                                  .sort( (d1, d2) => {
+                                        return (d1.sort < d2.sort)
+                                                    ? -1
+                                                    : (d1.sort > d2.sort) ? 1 : 0;
 
+                                  }).map( a => {
                                       return {
                                           id: a.ID,
-                                          tm: (1==a.UF_DAYATTR) ? ' ' : a.at.format("HH:mm"),
+                                          tm: (1==a.UF_DAYATTR) ? ' ' : a.at.format('HH:mm').replace('00:00', ' '),
                                           name: a.UF_TEXT,
                                           place: a.UF_PLACE,
-                                          chief: hdrs.join(',\n'),
-                                          emps:  emps.join(',\n')
+                                          chief: a.hdrs,
+                                          emps:  a.emps,
+                                          sort:  `${a.dsort} - ${a.ssort}`,
+                                          day:   (1==a.UF_DAYATTR)
                                       };
                                   })
                     };
@@ -227,6 +231,7 @@ export default {
                 })
             };
 
+            console.log('report', data);
             $.ajax({
                     url: `${ $nuxt.context.env.apiUrl }/exp-doc.php`,
                     type: "POST",

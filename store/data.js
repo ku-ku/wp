@@ -223,5 +223,8 @@ export const getters = {
             return d1.sort < d2.sort ? -1 : d1.sort > d2.sort ? 1 : 0;
         });
     },
-    staffing: state => state.staffing
+    staffing: state => {
+        const staffs = (state.staffing?.length > 0) ? [...state.staffing] : [];
+        return staffs.sort( (s1, s2) => s1.UF_NAME.localeCompare(s2.UF_NAME) );
+    }
 };

@@ -17,7 +17,13 @@
                             <wp-date-input label="Дата, время окончания"
                                            v-model="end"
                                            :rules="[ rules.empty ]" 
-                                           v-on:change="end = $event" />
+                                           v-on:change="set('end', $event)" 
+                                           ref="endt" />
+                            <v-checkbox label="включительно"
+                                        v-model="exend"
+                                        :true-value="true"
+                                        :false-value="false"
+                                        v-on:change="extend" />
                         </v-col>
                     </v-row>
                 </v-card-text>
@@ -51,6 +57,7 @@ export default {
             show:  false,
             start: null,
             end:   null,
+            exend: false,
             _r: null,       //Promise.resolv
             rules: {
                 empty: val => !empty(val) || "Это поле должно быть заполнено"
@@ -70,6 +77,23 @@ export default {
                 this._r = resolve;
             });
         },
+        set(q, val){
+            switch(q){
+                case "end":
+                    console.log("set(end)", val, this.exend);
+                    if (val){
+                        let dt = (val) ? new Date(val.getTime()) : this.start;
+                        if ( this.exend ){
+                            dt.setHours(23, 59, 59);
+                        }
+                        this.end = dt;
+                    } else {
+                        this.end = null;
+                    }
+                    
+                    break;
+            }
+        },
         ok(){
             if ( !this.$refs["form"].validate() ){
                 $nuxt.msg({text:'Необходимо заполнить обе даты', timeout: 6000, color: 'warning'});
@@ -86,6 +110,14 @@ export default {
             this.show = false;
             
             return false;
+        },
+        extend(val){
+            console.log(val);
+            if (val){
+                let dt = (this.end) ? new Date(this.end.getTime()) : this.start;
+                dt.setHours(23, 59, 59);
+                this.end = dt;
+            }
         },
         close(){
             if (this._r){
@@ -108,6 +140,12 @@ export default {
     .wp-dates{
         & .v-card__actions {
             justify-content: flex-end;
+        }
+        & .v-input{
+            &--selection-controls{
+                margin-top: -8px;
+                padding-top: 0;
+            }
         }
     }
 </style>

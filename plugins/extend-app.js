@@ -9,12 +9,16 @@ if (
     window["$"] = require("jquery");
 }
 
+Vue.prototype.$eventHub = new Vue();
+
+
 export default async function( ctx ){
     const { app, env, store } = ctx;
     
     if (!app.mixins) {
         app.mixins = [];
     }
+    
     
     /**
      * for snack-bar messages (see methods.msg -> $nuxt.msg)
