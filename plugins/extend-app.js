@@ -1,6 +1,10 @@
 import Vue from 'vue';
 import Vuetify from 'vuetify';
 import WpMsg from '~/components/WpMsg';
+import mom from "moment";
+mom.locale("ru");
+window["$moment"] = mom;
+
 
 if (
                     (typeof window["$"] === "undefined")

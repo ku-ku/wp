@@ -52,6 +52,13 @@
             <v-list-item-title>Сотрудники</v-list-item-title>
           </v-list-item>
           <v-divider></v-divider>
+          <v-list-item v-on:click="movereds()">
+            <v-list-item-icon><v-icon>mdi-calendar-arrow-right</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Перенести праздники...</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider></v-divider>
           <v-list-item v-on:click="doimp()">
             <v-list-item-icon><v-icon>mdi-table-arrow-up</v-icon></v-list-item-icon>
             <v-list-item-content>
@@ -70,6 +77,8 @@
                ref="dlgAct" :mode="DIA_MODES.action" />
     <wp-dialog v-if="dialog"
                ref="dlgRed" :mode="DIA_MODES.reday" />
+    <wp-dialog ref="dlgMoveReds" 
+               :mode="DIA_MODES.movereds" />
     <wp-dates ref="dates" />
   </v-app>
 </template>
@@ -257,7 +266,10 @@ export default {
             console.log('ERR (report)', e);
             $nuxt.msg({text:"Ошибка формирования отчета, попробуйте еще раз", color: "warning"});
         }
-    }   //doreport
+    },   //doreport
+    movereds(){
+        this.$refs["dlgMoveReds"].open();
+    }
   }
 }
 </script>

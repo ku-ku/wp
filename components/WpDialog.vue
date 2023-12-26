@@ -72,6 +72,7 @@ import WpFrmEmployee from "~/components/WpFrmEmployee.vue";
 import WpSelUsers from "~/components/WpSelUsers.vue";
 import WpSelDvss from "~/components/WpSelDvss.vue";
 import WpSearchField from "~/components/WpSearchField.vue";
+import WpMoveReds from "~/components/WpMoveReds.vue";
 
 const DIA_FORMS = {};
 DIA_FORMS[DIA_MODES.action] = WpFrmAction;
@@ -82,6 +83,8 @@ DIA_FORMS[DIA_MODES.staff]  = WpFrmStaff;
 DIA_FORMS[DIA_MODES.emp]    = WpFrmEmployee;
 DIA_FORMS[DIA_MODES.emplist]= WpSelUsers;
 DIA_FORMS[DIA_MODES.dvslist]= WpSelDvss;
+DIA_FORMS[DIA_MODES.movereds]=WpMoveReds;
+
 
 export default {
     name: 'WpDialog',
@@ -93,7 +96,8 @@ export default {
         WpFrmStaff,
         WpFrmEmployee,
         WpSelUsers,
-        WpSearchField
+        WpSearchField,
+        WpMoveReds
     },
     props: {
         mode: {
