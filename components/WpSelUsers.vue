@@ -53,11 +53,14 @@ export default {
     },
     computed: {
         employees(){
-            const re = ( empty(this.search) || (this.search.length<3) ) 
-                            ? null 
-                            : new RegExp(`(${ this.search.replace(/\.+/g, '') })+`, 'gi');
+            if ( !this.$store.state.data.employees ){
+                return [];
+            }
+            const re = ( this.search?.length > 2 ) 
+                            ? new RegExp(`(${ this.search.replace(/\.+/g, '') })+`, 'gi')
+                            : null;
             
-            return [...this.$store.state.data.employees || []].map(e =>{
+            return [...this.$store.state.data.employees].map(e =>{
                 e.seached = (re) ? re.test(e.UF_EMPNAME) : false;
                 e.checked = this.selected.findIndex( s => s===e.ID) > -1;
                 return e;
@@ -74,7 +77,7 @@ export default {
             const sels = [],
                   emps = this.$store.state.data.employees || [];
             this.selected.forEach( s => {
-                const n = emps.findIndex( e => e.ID == s);
+                const n = emps.findIndex( e => e.ID === s);
                 if ( n > -1){
                     sels.push(emps[n].UF_EMPNAME);
                 }
@@ -121,7 +124,9 @@ export default {
                     if (el.length > 0){
                         el.get(0).scrollIntoView();
                     } else {
-                        $nuxt.msg({text: `"${val}" - ничего не найдено`, timeout: 3000});
+                        if (val.length > 2){
+                            $nuxt.msg({text: `"${val}" - ничего не найдено`, timeout: 3000});
+                        }
                     }
                 }
             });
