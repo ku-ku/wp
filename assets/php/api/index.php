@@ -54,8 +54,12 @@ switch ($q){
     case "ping":
         $data = array("pong" => (new DateTime())->getTimestamp() );
         break;
+    case "publish":
+        $data = do_publish( $params );
+        break;    
     case "report":
         require './exp-doc.php';
+        break;
         
     default:
         $valid = false;
@@ -110,7 +114,7 @@ function user(){
         $planningGroupId = (!!$group) ? $group["ID"] : -1;
         $res["haswp"] = $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray());
         
-        $filter = array("STRING_ID" => WP_GROUPM);
+        $filter = array("STRING_ID" => WP_GROUPMOD);
         $group = CGroup::GetList($f, $sort, $filter)->fetch();
         $planningGroupId = (!!$group) ? $group["ID"] : -1;
         $res["hasmod"] = $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray());
@@ -442,7 +446,7 @@ function acts($params = false){
         } else {
             $args['filter'] = array('=UF_RED' => 0);
             $period = $params["period"];
-            if (!!period) {
+            if (!!$period) {
                 $start = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["start"]) );
                 $end   = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["end"]) );
                 $args["filter"] = [
@@ -580,7 +584,7 @@ function reds($params = false){
         } else {
             $args['filter'] = array('=UF_RED' => 1);
             $period = $params["period"];
-            if (!!period) {
+            if (!!$period) {
                 $start = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["start"]) );
                 $end   = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["end"]) );
                 $args["filter"] = [
@@ -630,5 +634,14 @@ function imp($params){
     );
     return $res;
 }   //imp...
+
+function do_publish( $params ){
+    global $DB;
+    $start = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($params["start"]) );
+    $end   = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($params["end"]) );
+    $rows  = $DB->Update("wpactions", array("UF_WWWATTR"  => 1), "WHERE (UF_WWWATTR!=1) and (UF_READY=1) and UF_ADT between '" 
+             . $start->format('Y-m-d 00:00:00') . "' and '" . $end->format('Y-m-d 23:59:59') . "'");
+    return array("success"=>true, "rows"=>$rows);
+}   //do_publish
 
 ?>

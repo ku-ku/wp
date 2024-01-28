@@ -52,6 +52,12 @@
             <v-list-item-title>Сотрудники</v-list-item-title>
           </v-list-item>
           <v-divider></v-divider>
+          <v-list-item v-on:click="pubplan()">
+            <v-list-item-icon><v-icon>mdi-calendar-check</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Опубликовать...</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
           <v-list-item v-on:click="movereds()">
             <v-list-item-icon><v-icon>mdi-calendar-arrow-right</v-icon></v-list-item-icon>
             <v-list-item-content>
@@ -108,7 +114,7 @@ export default {
       DIA_MODES,
       navi: null,
       dialog: false
-    }
+    };
   },
   computed:  {
     ...mapState({
@@ -266,10 +272,43 @@ export default {
             console.log('ERR (report)', e);
             $nuxt.msg({text:"Ошибка формирования отчета, попробуйте еще раз", color: "warning"});
         }
-    },   //doreport
+    },  //doreport
     movereds(){
         this.$refs["dlgMoveReds"].open();
-    }
+    },  //movereds
+    async pubplan(){
+        const p = await this.$refs["dates"].open();
+        if (!p){
+            return;
+        }
+        
+        p.start = $moment(p.start);
+        p.end   = $moment(p.end);
+        const opts = {
+                url: $nuxt.context.env.apiUrl,
+                data: {
+                    q: "publish",
+                    params: {
+                        start: p.start.toISOString(),
+                        end: p.end.toISOString()
+                    }
+                },
+                dataType: "json"
+        };
+        try {    
+            const res = await $.ajax(opts);
+            console.log("publish", res);
+            if ( res.success ){
+                $nuxt.msg({text: (res.rows > 0)
+                                    ? `Опубликовано ${ res.rows } записей`
+                                    : "За указанный период нет записей для опубликования",
+                           color: "default"});
+            }
+        } catch(e){
+            console.log('ERR (pub)', e);
+            $nuxt.msg({text:"Ошибка публикации записей, попробуйте еще раз", color: "warning"});
+        }
+    }   //pubplan
   }
 }
 </script>
