@@ -26,9 +26,9 @@ export default async function( ctx ){
     
     /**
      * for snack-bar messages (see methods.msg -> $nuxt.msg)
+     * appMsg = null,
      */
-    var appMsg = null,
-        worker = null;
+    var worker = null;
     
     var conte = $(".page-content");
     if ( conte.length > 0 ){        //attache root to bx-conte
@@ -123,7 +123,6 @@ export default async function( ctx ){
             /**
              * Messaging: show/hide app-message on snackbar
              * @param {Object} msg text, color?, timeout?
-             */
             msg(msg){
                 if (!(!!appMsg)){
                     const el = $('<div id="app-msg"></div>').appendTo($(this.$el).find('.v-application'));
@@ -138,6 +137,7 @@ export default async function( ctx ){
                 }
                 return appMsg.show(msg);
             },
+             */
             cache(data){
                 if (1==1){
                     return;

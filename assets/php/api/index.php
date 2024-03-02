@@ -43,7 +43,7 @@ switch ($q){
         $data = employees( $params );
         break;
     case "places":
-        $data = places();
+        $data = places( $params );
         break;
     case "user":
         $data = user();
@@ -616,13 +616,34 @@ function reds($params = false){
     return $res;
 }   //reds...   
 
-function places(){
+function places( $params = false ){
     global $DB;
-    $rsData = $DB->Query("select distinct UF_PLACE from wpactions where UF_PLACE is not NULL order by 1");
-    while( $el = $rsData->fetch() ){
-        $res[] = $el['UF_PLACE'];
+    $res = array();
+    if ( ($params !== false) && (!!$params["action"]) ){
+        if ("save" == $params["action"]){
+            $item = $params["item"];
+            $rows = 0;
+            $rsData = $DB->Query("select a1.ID from wpactions a1 where exists(select * from wpactions a2 where a2.ID=" . intval($item["ID"]) . " and a1.UF_PLACE=a2.UF_PLACE)");
+            while( $el = $rsData->fetch() ){
+                $DB->Update(
+                               "wpactions", 
+                                array("UF_PLACE" => "'" . $item["UF_PLACE"] . "'"),
+                               "WHERE ID=" . intval($el["ID"])
+                            );
+                $rows++;
+            }
+            $res["success"] = true;
+            $res["rows"] = $rows;
+            $res["item"] = array("ID" => $item["ID"], "UF_PLACE" => $item["UF_PLACE"]);
+            return $res;
+        }
+        return array("success"=>false, "error"=>"bad action: " . $params["action"]);
     }
-
+    
+    $rsData = $DB->Query("select min(ID) ID, count(*) NUMS, UF_PLACE from wpactions where (UF_PLACE is not NULL) group by UF_PLACE order by UF_PLACE");
+    while( $el = $rsData->fetch() ){
+        $res[] = array("ID" => $el["ID"], "NUMS" => $el["NUMS"], "UF_PLACE" => $el["UF_PLACE"]);
+    }
     return $res;
 }   //places
 

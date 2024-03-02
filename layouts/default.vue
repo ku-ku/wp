@@ -51,6 +51,10 @@
             <v-list-item-icon><v-icon>mdi-account-tie</v-icon></v-list-item-icon>
             <v-list-item-title>Сотрудники</v-list-item-title>
           </v-list-item>
+          <v-list-item :to="{path: '/info/places', replace: true}">
+            <v-list-item-icon><v-icon>mdi-sofa</v-icon></v-list-item-icon>
+            <v-list-item-title>Места проведения мероприятий</v-list-item-title>
+          </v-list-item>
           <v-divider></v-divider>
           <v-list-item v-on:click="pubplan()">
             <v-list-item-icon><v-icon>mdi-calendar-check</v-icon></v-list-item-icon>
@@ -86,6 +90,7 @@
     <wp-dialog ref="dlgMoveReds" 
                :mode="DIA_MODES.movereds" />
     <wp-dates ref="dates" />
+    <wp-msg ref ="app-msg" />
   </v-app>
 </template>
 
@@ -96,6 +101,7 @@ import $moment from "moment";
 $moment.locale("ru");
 
 import WpBar from '~/components/WpBar.vue';
+import WpMsg from '~/components/WpMsg';
 import WpDialog from '~/components/WpDialog.vue';
 import WpAuthBtn from '~/components/WpAuthBtn.vue';
 import WpDates from '~/components/WpDates.vue';
@@ -107,6 +113,7 @@ export default {
   name: 'DefaultLayout',
   components: {
     WpBar,
+    WpMsg,
     WpDialog
   },
   data(){
@@ -124,6 +131,9 @@ export default {
           }
     })
   },
+  created(){
+      $nuxt.msg = this.msg;
+  },
   methods: {
     has(q){
       switch(q){
@@ -138,6 +148,14 @@ export default {
       this.$nextTick(()=>{
         this.$refs[q].open({ID:-1});
       });
+    },
+    /**
+     * Messaging: show/hide app-message on snackbar
+     * @param {Object} msg text, color?, timeout?
+     */
+    msg(msg){
+        const appMsg = this.$refs["app-msg"];
+        return appMsg.show(msg);
     },
     doimp(){
       this.$router.replace({path: '/calendar', query: {imp: (new Date()).getTime()}});

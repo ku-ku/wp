@@ -24,7 +24,8 @@ const DIA_MODES = {
     "emp": 6,
     "emplist": 7,
     "dvslist": 8,
-    "movereds": 9
+    "movereds": 9,
+    "place": 10
 };
 
 /**

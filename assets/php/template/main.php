@@ -1,4 +1,5 @@
 <?php
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use App\App;
@@ -56,12 +57,29 @@ use Bitrix\Main\Page\Asset;
 
     $APPLICATION->ShowHead();
     ?>
-</head>
+
+
+
 <body class="page">
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript" >
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+   ym(89388304, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/89388304" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
 <?$APPLICATION->ShowPanel()?>
 <div id="svg-sprite" data-src="<?= App::frontendPath() ?>/img/sprites.svg"></div>
-
-
 
 <!-- Header-->
 <header class="header">
@@ -130,9 +148,9 @@ use Bitrix\Main\Page\Asset;
                             // "OAuth2IsTestEnvironment" => false,
                             // "OAuth2OnlyTrustedUsers" => "Y",
                             "OAuth2OnlyVerifyedData" => "Y",
-                            "OAuth2PkeyPath" => "/opt/Bitrix/releases/80/local/components/rnds/rnds.esia.oauth.gost/lib/Keys/GOST3410_2012_256/secret.key",
-                            "OAuth2CertPath" => "/opt/Bitrix/releases/80/local/components/rnds/rnds.esia.oauth.gost/lib/Keys/GOST3410_2012_256/cert.crt",
-                            'OAuth2EsiaCertPath' => '/opt/Bitrix/releases/80/local/components/rnds/rnds.esia.oauth.gost/lib/Keys/GOST3410_2012_256/esia-prod.crt'
+                            "OAuth2PkeyPath" => "/var/www/html/releases/80/local/components/rnds/rnds.esia.oauth.gost/lib/Keys/GOST3410_2012_256/secret.key",
+                            "OAuth2CertPath" => "/var/www/html/releases/80/local/components/rnds/rnds.esia.oauth.gost/lib/Keys/GOST3410_2012_256/cert.crt",
+                            'OAuth2EsiaCertPath' => '/var/www/html/releases/80/local/components/rnds/rnds.esia.oauth.gost/lib/Keys/GOST3410_2012_256/esia-prod.crt'
                           ),
                         false);
                     ?>
@@ -146,7 +164,8 @@ use Bitrix\Main\Page\Asset;
                 <div class="col-12 col-sm-auto">
                     <a class="main-logo" href="/" title="На главную">
                         <svg class="icon main-logo__icon main-logo__main-logo-symbol">
-                            <use xlink:href="#main-logo__main-logo-symbol"></use>
+                            <!--use xlink:href="#main-logo__main-logo-symbol"></use-->
+                            <image xlink:href="/images/30_years_logo.svg" width="90" height="36" />
                         </svg>
 <img border="0" src="/images/ban.png" width="59" height="39">
                         <h1 class="main-logo__title-wrapper">
@@ -318,6 +337,10 @@ use App\App;
 
 </main>
 
+<?php
+//die();
+?>
+
 <div class="modal-window" id="modal-form-errors">
     <div class="modal-window__header">
         <div class="modal-window__title">Ошибка</div>
@@ -347,7 +370,6 @@ use App\App;
     <div class="container">
         <div class="row">
             <div class="main-logo main-logo_footer col-12 col-lg-4">
-                <img class="main-logo__icon" src="<?= App::frontendPath() ?>/static/main-logo/main-logo.png" alt="Законодательное Собрание">
                 <h1 class="main-logo__title-wrapper">
                     <span class="main-logo__title">Законодательное Собрание</span>
                     <span class="main-logo__subtitle">Краснодарского края</span>
@@ -356,7 +378,8 @@ use App\App;
             </div>
             <nav class="all-menu-links all-menu-links_footer col-12 col-lg-8">
                 <div class="row">
-                    <?$APPLICATION->IncludeComponent("bitrix:menu", "footer.inner.block", Array(
+                    <? 
+                    $APPLICATION->IncludeComponent("bitrix:menu", "footer.inner.block", Array(
                         "ALLOW_MULTI_SELECT" => "N",	// Разрешить несколько активных пунктов одновременно
                         "CHILD_MENU_TYPE" => "",	// Тип меню для остальных уровней
                         "DELAY" => "N",	// Откладывать выполнение шаблона меню
@@ -372,8 +395,8 @@ use App\App;
                         "COMPONENT_TEMPLATE" => ".default"
                     ),
                         false
-                    );?>
-                    <?$APPLICATION->IncludeComponent("bitrix:menu", "footer.inner.block", Array(
+                    );  ?>
+                    <? $APPLICATION->IncludeComponent("bitrix:menu", "footer.inner.block", Array(
                         "ALLOW_MULTI_SELECT" => "N",	// Разрешить несколько активных пунктов одновременно
                         "CHILD_MENU_TYPE" => "",	// Тип меню для остальных уровней
                         "DELAY" => "N",	// Откладывать выполнение шаблона меню
@@ -389,8 +412,8 @@ use App\App;
                         "COMPONENT_TEMPLATE" => ".default"
                     ),
                         false
-                    );?>
-                    <?$APPLICATION->IncludeComponent("bitrix:menu", "footer.inner.block", Array(
+                    ); ?>
+                    <? $APPLICATION->IncludeComponent("bitrix:menu", "footer.inner.block", Array(
                         "ALLOW_MULTI_SELECT" => "N",	// Разрешить несколько активных пунктов одновременно
                         "CHILD_MENU_TYPE" => "",	// Тип меню для остальных уровней
                         "DELAY" => "N",	// Откладывать выполнение шаблона меню
@@ -406,8 +429,8 @@ use App\App;
                         "COMPONENT_TEMPLATE" => ".default"
                     ),
                         false
-                    );?>
-                    <?$APPLICATION->IncludeComponent("bitrix:menu", "footer.inner.block", Array(
+                    ); ?>
+                    <? $APPLICATION->IncludeComponent("bitrix:menu", "footer.inner.block", Array(
                         "ALLOW_MULTI_SELECT" => "N",	// Разрешить несколько активных пунктов одновременно
                         "CHILD_MENU_TYPE" => "",	// Тип меню для остальных уровней
                         "DELAY" => "N",	// Откладывать выполнение шаблона меню
@@ -423,7 +446,7 @@ use App\App;
                         "COMPONENT_TEMPLATE" => ".default"
                     ),
                         false
-                    );?>
+                    ); ?>
                 </div>
             </nav>
             <?/*<div class="col-12">
@@ -433,14 +456,17 @@ use App\App;
                 <div class="share-iformation__inner">
                     <div class="copyright">
                         <div class="text text_theme-grey copyright__text">
-                            <?$APPLICATION->IncludeComponent('rr:static.text', '', [
+                            <? $APPLICATION->IncludeComponent('rr:static.text', '', [
                                 'IBLOCK_ID' => IBLOCK_STATIC,
                                 'CODE' => 'footer-copyright'
-                            ])?>
+                            ]) ?>
                         </div>
+<!-- Yandex.Metrika informer -->
+<a href="https://metrika.yandex.ru/stat/?id=89388304&amp;from=informer" target="_blank" rel="nofollow"><img src="https://informer.yandex.ru/informer/89388304/3_0_FFFFFFFF_EFEFEFFF_0_pageviews" style="width:88px; height:31px; border:0;" alt="Яндекс.Метрика" title="Яндекс.Метрика: данные за сегодня (просмотры, визиты и уникальные посетители)" class="ym-advanced-informer" data-cid="89388304" data-lang="ru" /></a>
+<!-- /Yandex.Metrika informer -->
                     </div>
                     <!-- socials -->
-                    <?$APPLICATION->IncludeFile("/include/socials.php")?>
+                    <? $APPLICATION->IncludeFile("/include/socials.php") ?>
                 </div>
             </div>
         </div>
@@ -448,3 +474,4 @@ use App\App;
 </footer>
 
 </body>
+</html>

@@ -54,8 +54,12 @@ switch ($q){
     case "ping":
         $data = array("pong" => (new DateTime())->getTimestamp() );
         break;
+    case "publish":
+        $data = do_publish( $params );
+        break;    
     case "report":
         require './exp-doc.php';
+        break;
         
     default:
         $valid = false;
@@ -630,5 +634,14 @@ function imp($params){
     );
     return $res;
 }   //imp...
+
+function do_publish( $params ){
+    global $DB;
+    $start = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($params["start"]) );
+    $end   = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($params["end"]) );
+    $rows  = $DB->Update("wpactions", array("UF_WWWATTR"  => 1), "WHERE (UF_WWWATTR!=1) and (UF_READY=1) and UF_ADT between '" 
+             . $start->format('Y-m-d 00:00:00') . "' and '" . $end->format('Y-m-d 23:59:59') . "'");
+    return array("success"=>true, "rows"=>$rows);
+}   //do_publish
 
 ?>
