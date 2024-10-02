@@ -43,7 +43,7 @@ switch ($q){
         $data = employees( $params );
         break;
     case "places":
-        $data = places();
+        $data = places( $params );
         break;
     case "user":
         $data = user();
@@ -54,8 +54,12 @@ switch ($q){
     case "ping":
         $data = array("pong" => (new DateTime())->getTimestamp() );
         break;
+    case "publish":
+        $data = do_publish( $params );
+        break;    
     case "report":
         require './exp-doc.php';
+        break;
         
     default:
         $valid = false;
@@ -110,7 +114,7 @@ function user(){
         $planningGroupId = (!!$group) ? $group["ID"] : -1;
         $res["haswp"] = $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray());
         
-        $filter = array("STRING_ID" => WP_GROUPM);
+        $filter = array("STRING_ID" => WP_GROUPMOD);
         $group = CGroup::GetList($f, $sort, $filter)->fetch();
         $planningGroupId = (!!$group) ? $group["ID"] : -1;
         $res["hasmod"] = $USER->IsAdmin() || array_search($planningGroupId, $USER->GetUserGroupArray());
@@ -140,8 +144,14 @@ function divisions($params = false){
         switch($params["action"]){
             case "save":
                 $item = $params["item"];
-                unset($item["isTrusted"]);
-                $dvss->save($item);
+                $fields = array( 
+                    "ID" => $item["ID"],
+                    "UF_NAME" => $item["UF_NAME"],
+                    "UF_CODE" => $item["UF_CODE"],
+                    "UF_ACTIVE" => !!$item["UF_ACTIVE"] ? 1 : 0,
+                    "UF_SORT"   => intval($item["UF_SORT"])
+                );
+                $res = $dvss->save($fields);
                 break;
             case "del":
                 $dvss->del(intval($params['ID']));
@@ -387,14 +397,15 @@ function acts($params = false){
                     "UF_ADT"      => Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime($item["UF_ADT"])),
                     "UF_RED"      => 0,
                     "UF_DVS"      => $item["UF_DVS"],
-                    "UF_GRATTR"   => (!!$item["UF_GRATTR"]) ? 1 : 0,
-                    "UF_DAYATTR"  => (!!$item["UF_DAYATTR"]) ? 1 : 0,
+                    "UF_GRATTR"   => (!!$item["UF_GRATTR"])   ? 1 : 0,
+                    "UF_DAYATTR"  => (!!$item["UF_DAYATTR"])  ? 1 : 0,
                     "UF_YEARATTR" => (!!$item["UF_YEARATTR"]) ? 1 : 0,
                     "UF_SPECATTR" => (!!$item["UF_SPECATTR"]) ? 1 : 0,
-                    "UF_WWWATTR"  => (!!$item["UF_WWWATTR"]) ? 1 : 0,
-                    "UF_READY"    => (!!$item["UF_READY"]) ? 1 : 0,
+                    "UF_WWWATTR"  => (!!$item["UF_WWWATTR"])  ? 1 : 0,
+                    "UF_READY"    => (!!$item["UF_READY"])    ? 1 : 0,
+                    "UF_ANNOUN"   => (!!$item["UF_ANNOUN"])   ? 1 : 0,
                     "UF_TEXT"     => $item["UF_TEXT"],
-                    "UF_PLACE"    => $item["UF_PLACE"],
+                    "UF_PLACE"    => is_array($item["UF_PLACE"]) ? $item["UF_PLACE"]["UF_PLACE"] : $item["UF_PLACE"],
                     "UF_CHIEF"    => $item["UF_CHIEF"],
                     "UF_STATUS"   => $item["UF_STATUS"],
                     "UF_COMMENTS" => $item["UF_COMMENTS"],
@@ -425,6 +436,7 @@ function acts($params = false){
     } else {
         $fully= ($params !== false)&&(1==$params["fully"]);
         $byId = (!!$params) && (intval($params["ID"])>0);
+        $announs=(!!$params) && (intval($params["announs"])>0);
         
         $dirs = new stdClass();
         $dirs->users= array_slice(users(false), 0);
@@ -436,15 +448,20 @@ function acts($params = false){
         } else {
             $args['filter'] = array('=UF_RED' => 0);
             $period = $params["period"];
-            if (!!period) {
+            if (!!$period) {
                 $start = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["start"]) );
                 $end   = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["end"]) );
-                $args["filter"] = [
+                $filter= [
                     "LOGIC" => "AND",
                     ['=UF_RED' => 0],
                     ['>=UF_ADT' => $start],
-                    ['<=UF_ADT' => $end]
+                    ['<=UF_ADT' => $end],
                 ];
+                if ( $announs ){
+                    array_push($filter, ["=UF_ANNOUN" => 1]);
+                }
+                
+                $args["filter"] = $filter;
             }
         }
         
@@ -467,6 +484,7 @@ function acts($params = false){
                 foreach ($dirs->emps as $_e){
                     if ($el["UF_CHIEF"] == $_e["ID"]){
                         $el["CHIEF_NAME"] = $_e["UF_EMPNAME"];
+                        $el["CHIEF"] = $_e;
                         break;
                     }
                 }
@@ -573,7 +591,7 @@ function reds($params = false){
         } else {
             $args['filter'] = array('=UF_RED' => 1);
             $period = $params["period"];
-            if (!!period) {
+            if (!!$period) {
                 $start = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["start"]) );
                 $end   = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($period["end"]) );
                 $args["filter"] = [
@@ -605,13 +623,34 @@ function reds($params = false){
     return $res;
 }   //reds...   
 
-function places(){
+function places( $params = false ){
     global $DB;
-    $rsData = $DB->Query("select distinct UF_PLACE from wpactions where UF_PLACE is not NULL order by 1");
-    while( $el = $rsData->fetch() ){
-        $res[] = $el['UF_PLACE'];
+    $res = array();
+    if ( ($params !== false) && (!!$params["action"]) ){
+        if ("save" == $params["action"]){
+            $item = $params["item"];
+            $rows = 0;
+            $rsData = $DB->Query("select a1.ID from wpactions a1 where exists(select * from wpactions a2 where a2.ID=" . intval($item["ID"]) . " and a1.UF_PLACE=a2.UF_PLACE)");
+            while( $el = $rsData->fetch() ){
+                $DB->Update(
+                               "wpactions", 
+                                array("UF_PLACE" => "'" . $item["UF_PLACE"] . "'"),
+                               "WHERE ID=" . intval($el["ID"])
+                            );
+                $rows++;
+            }
+            $res["success"] = true;
+            $res["rows"] = $rows;
+            $res["item"] = array("ID" => $item["ID"], "UF_PLACE" => $item["UF_PLACE"]);
+            return $res;
+        }
+        return array("success"=>false, "error"=>"bad action: " . $params["action"]);
     }
-
+    
+    $rsData = $DB->Query("select min(ID) ID, count(*) NUMS, UF_PLACE from wpactions where (UF_PLACE is not NULL) group by UF_PLACE order by UF_PLACE");
+    while( $el = $rsData->fetch() ){
+        $res[] = array("ID" => $el["ID"], "NUMS" => $el["NUMS"], "UF_PLACE" => $el["UF_PLACE"]);
+    }
     return $res;
 }   //places
 
@@ -623,5 +662,14 @@ function imp($params){
     );
     return $res;
 }   //imp...
+
+function do_publish( $params ){
+    global $DB;
+    $start = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($params["start"]) );
+    $end   = Bitrix\Main\Type\DateTime::createFromTimestamp( strtotime($params["end"]) );
+    $rows  = $DB->Update("wpactions", array("UF_WWWATTR"  => 1), "WHERE (UF_WWWATTR!=1) and (UF_READY=1) and UF_ADT between '" 
+             . $start->format('Y-m-d 00:00:00') . "' and '" . $end->format('Y-m-d 23:59:59') . "'");
+    return array("success"=>true, "rows"=>$rows);
+}   //do_publish
 
 ?>

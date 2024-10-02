@@ -81,6 +81,8 @@
                             clearable
                             required
                             hide-details
+                            item-value="ID"
+                            item-text="UF_PLACE"
                             label="Место проведения"
                             :items="places"
                             :error="errs.UF_PLACE">

@@ -88,9 +88,6 @@ import WpDates from '~/components/WpDates.vue';
 import { DIA_MODES, gen_days, empty, shorting } from '~/utils';
 
 
-
-
-
 export default {
   name: 'DefaultLayout',
   components: {
@@ -163,6 +160,7 @@ export default {
             opts.data.q = "reds";
             const reds= await $.ajax(opts);
             const dvss= this.$store.getters["data/divisions"]||[];
+            const stfs= this.$store.getters["data/staffing"]||[];
             
             const data = {
                 start: p.start.format('DD.MM.YYYY'),
@@ -179,11 +177,13 @@ export default {
                                 name: a.UF_TEXT
                             };
                         }),
-                        acts: all.filter(a => (1!=a.UF_RED && d.isSame(a.UF_ADT, 'day') ))
+                        acts: all.filter(a => ( 1!=a.UF_RED && 1==a.UF_STATUS && d.isSame(a.UF_ADT, 'day') ))
                                   .map( a => {
                                       a.at = $moment(a.UF_ADT);
                                       var n = dvss.findIndex( dvs => dvs.ID == a.UF_DVS);
                                       a.dsort = (n < 0) ? 9999999 : dvss[n].sort;
+                                      n = stfs.findIndex( stf => stf.ID == a.CHIEF?.UF_STAFF);
+                                      a.ssort = (n < 0) ? 9999999 : Number(stfs[n].UF_SORT);
                                       return a;
                                   })
                                   .sort( (d1, d2) => {
@@ -194,7 +194,8 @@ export default {
                                                         ? -1 
                                                         : d1.at.isAfter(d2.at) 
                                                             ? 1 
-                                                            : d1.dsort < d2.dsort ? -1 : 1;
+                                                            : (d1.dsort == d2.dsort)
+                                                                ? d1.ssort - d2.ssort : d1.dsort - d2.dsort;
                                   }).map( a => {
                                       
                                       const hdrs = [shorting(a.CHIEF_NAME)];
@@ -217,8 +218,8 @@ export default {
                                           tm: (1==a.UF_DAYATTR) ? ' ' : a.at.format("HH:mm"),
                                           name: a.UF_TEXT,
                                           place: a.UF_PLACE,
-                                          chief: hdrs.join(", "),
-                                          emps:  emps.join(", ")
+                                          chief: hdrs.join(',\n'),
+                                          emps:  emps.join(',\n')
                                       };
                                   })
                     };
@@ -238,8 +239,11 @@ export default {
                     cache: false,
                     success: resp => {
                         const blob = new Blob([resp], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
-                        const downloadUrl = URL.createObjectURL(blob);
-                        window.location.href = downloadUrl;
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download=`report-${ p.start.format('MM-YYYY') }.docx`;
+                        link.click();
+                        //window.location.href = downloadUrl;
                     }
             }).catch( e => {
                 console.log('ERR (report)', e);

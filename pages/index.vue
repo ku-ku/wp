@@ -73,7 +73,7 @@ export default {
   },
   computed: {
       all(){
-        return this.$store.getters["data/all"];
+        return this.$store.getters["data/all"]?.filter( a => (1==a.UF_WWWATTR) );
       }
   },
   methods:{

@@ -36,15 +36,33 @@ foreach($info->days as $day){
     $cell = $table->addCell(5000, $cellColSpan);
     $cell->addTextRun(['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER, 'spaceAfter' => 120])->addText($day->day->day, ["bold" => true]);
     foreach($day->reds as $red){
-        $cell->addTextRun(['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER])->addText($red->name, ["underline"=>"single"]);
+        $cell->addTextRun(['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER])->addText($red->name, ["underline"=>"single", "italic"=>true]);
     }
     foreach($day->acts as $a){
         $row = $table->addRow();
         $row->addCell(360)->addTextRun($cellCentered)->addText($a->tm);
         $row->addCell(2655)->addText($a->name);
-        $row->addCell(595)->addText($a->place);
-        $row->addCell(695)->addText($a->chief);
-        $row->addCell(695)->addText($a->emps);
+        $row->addCell(595)->addTextRun($cellCentered)->addText($a->place);
+        
+        $cell = $row->addCell(695);
+        if ( strlen($a->chief)>0 ){
+            $ar = explode(",", $a->chief);
+            if (count($ar)>0){
+                foreach($ar as $e){
+                    $cell->addTextRun(['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::LEFT])->addText(trim($e));
+                }
+            }
+        }
+        
+        $cell = $row->addCell(695);
+        if ( strlen($a->emps)>0 ){
+            $ar = explode(",", $a->emps);
+            if (count($ar)>0){
+                foreach($ar as $e){
+                    $cell->addTextRun(['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::LEFT])->addText(trim($e));
+                }
+            }
+        }
     }
 }
 

@@ -72,6 +72,10 @@ export default {
 
   build: {
     publicPath: isDev ? undefined : '//kubzsk.ru/wp/app/',
-    postcss: null
+    postcss: null,
+    babel: {
+                babelrc: false,
+                presets: false
+    }
   }
 }

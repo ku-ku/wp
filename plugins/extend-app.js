@@ -2,6 +2,9 @@ import Vue from 'vue';
 import Vuetify from 'vuetify';
 import WpMsg from '~/components/WpMsg';
 
+import '@mdi/font/css/materialdesignicons.css';
+
+
 if (
                     (typeof window["$"] === "undefined")
                 ||  (typeof window["$"].ajax === "undefined")

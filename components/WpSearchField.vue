@@ -33,7 +33,8 @@ export default {
         },
         reset(){
             this.s = null;
-            $(this.$el).find("input").val("");
+            //$(this.$el).find("input").val("");
+            $(this.$el).find("button").trigger("click");
         }
     },
     computed: {
