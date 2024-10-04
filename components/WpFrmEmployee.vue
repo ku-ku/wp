@@ -111,6 +111,7 @@ export default {
             await this.$store.dispatch("data/list", "users");
         } catch(e){
             console.log('ERR (fetch)', e);
+            $nuxt.msg({text: 'Ошибка загрузки справочников, обновите страницу', color: 'warning'});
         }
     },
     data(){
@@ -149,10 +150,10 @@ export default {
             return re.test(item.hasOwnProperty("LAST_NAME") ? item.LAST_NAME : item.UF_NAME);
         },
         staffing(){
-            return this.$store.state.data.staffing;
+            return [...this.$store.getters["data/staffing"]];
         },
         divisions(){
-            return this.$store.state.data.divisions;
+            return this.$store.getters["data/divisions"];
         },
         validate(){
             const _RQS = ["UF_ADDED", "UF_EMPNAME", "UF_DVS", "UF_STAFF"],

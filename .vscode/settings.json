@@ -1,0 +1,9 @@
+{
+    "editor.accessibilitySupport": "off",
+    "editor.autoClosingBrackets": "never",
+    "editor.codeLens": false,
+    "editor.dragAndDrop": false,
+    "editor.dropIntoEditor.enabled": false,
+    "editor.parameterHints.enabled": false,
+    "editor.minimap.enabled": false
+}

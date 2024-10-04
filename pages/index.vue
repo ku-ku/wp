@@ -16,8 +16,9 @@
                 </li>
               </ul>
               <v-row v-for="a in get('acts', d)"
-                    :key="'act-' + a.ID">
-                <v-col cols="12" class="wp-action">
+                    :key="'act-' + a.ID"
+                    class="wp-action mb-2">
+                <v-col cols="12">
                   {{a.UF_TEXT}}
                   <div class="wp-action__meta">
                     <span class="time" v-if="'00:00'!==a.at.format('HH:mm')">

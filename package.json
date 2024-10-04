@@ -1,6 +1,6 @@
 {
   "name": "wp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "dev": "nuxt",
@@ -13,6 +13,7 @@
     "@babel/runtime-corejs3": "^7.25.6",
     "@babel/core": "^7.15.0",
     "@babel/preset-env": "^7.15.0",
+    "@mdi/font": "^7.4.47",
     "babel-core": "^7.0.0-bridge.0",
     "core-js": "3",
     "inputmask": "^5.0.7",
@@ -24,7 +25,6 @@
     "vuetify": "^2.7.2"
   },
   "devDependencies": {
-    "@mdi/font": "^7.4.47",
     "@nuxtjs/proxy": "^2.1.0",
     "@nuxtjs/vuetify": "^1.12.3",
     "sass-loader": "^10.2.0"

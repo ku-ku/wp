@@ -60,7 +60,6 @@
             <v-calendar locale="ru" 
                         ref="calendar"
                         v-model="value"
-                        class="mt-3"
                         color="primary"
                         :events="events()"
                         :type="type"
@@ -135,6 +134,7 @@
                       item-key="id"
                       :headers="headers"
                       :items="events(value)"
+                      :loading="loading"
                       single-select
                       disable-pagination
                       disable-sort
@@ -207,9 +207,12 @@ const _TB_HEADERS = [
     { text: '', value: 'actions', sortable: false, width: "7rem", cellClass: "text-center" }
 ];
 
+let _on = null; 
+
 export default {
     name: 'WpCalendar',
     fetchOnServer: false,
+    middleware: 'auth',
     async asyncData({store}){
         //preload data
         try {
@@ -222,8 +225,6 @@ export default {
         return {
             DIA_MODES,
             loading: false,
-            value: '',
-            type: 'month',
             types: [{name: 'Месяц', id:'month'}, {name:'День', id:'day'}],
             all: null,
             dialog: false,
@@ -233,6 +234,34 @@ export default {
     },
     created(){
         $nuxt.hidextras();
+        if (!_on){
+            //$nuxt.$off('calendar');
+            this.$eventHub.$off('calendar');
+        }
+        //$nuxt.$on
+        _on = this.$eventHub.$on('calendar', e => {
+                console.log('calendar', e);
+                switch(e.type){
+                    case 'month':
+                        this.type = 'month';
+                        break;
+                    case 'prev':
+                        this.prev();
+                        break;
+                    case 'today':
+                        this.gotoday();
+                        break;
+                    case 'refresh':
+                        this.$store.commit("data/set", {acts: null, reds: null});
+                        this.all = null;
+                        this.$nextTick(()=>{ this._fetch(); });
+                        break;
+                    case 'next':
+                        this.next();
+                        break;
+                }
+                return false;
+        });
         try {
             var setts = window.localStorage.getItem(WP_SETTS_KEY);
             if (setts){
@@ -263,6 +292,10 @@ export default {
             window.localStorage.setItem(WP_SETTS_KEY, JSON.stringify(setts));
         }catch(e){}
     },
+    beforeDestroy(){
+        this.$eventHub.$off('calendar');
+        _on = null;
+    },
     computed: {
         ...mapState({
             period: state => state.period,
@@ -273,6 +306,23 @@ export default {
         },
         imp(){
             return this.$route.query.imp;
+        },
+        type: {
+            get(){
+                return this.$store.state.period.type || 'month';
+            },
+            set(val){
+                this.$store.commit("set", {period: {type: val || 'month'}});
+            }
+        },
+        value: {
+            get(){
+                return this.$store.state.period.work.toDate();
+            },
+            set(val){
+                console.log('value', val);
+                this.$store.commit("set", {period: {work: val}});
+            }
         }
     },
     methods:{
@@ -322,7 +372,8 @@ export default {
         },
         gotoday(){
             this.type = 'day';
-            this.$nextTick( ()=> this.value=new Date() );
+            this.value=new Date();
+            this.$forceUpdate();
         },
         change({start, end}){
             this.$store.commit("set", { period: {
@@ -506,7 +557,12 @@ export default {
             if (this.$refs.calendar){
                 this.$refs.calendar.prev();
             } else {
-                this.value = $moment(this.value).add(-1, 'day').toDate();
+                const d = this.$store.state.period.work.clone();
+                this.$store.commit("set", {period: {work: d.add(-1, 'day')}});
+                if (this.all?.length < 1){
+                    this._fetch();
+                }
+                
                 this.$nextTick(this._to_top);
             }
         },
@@ -514,7 +570,11 @@ export default {
             if (this.$refs.calendar){
                 this.$refs.calendar.next();
             } else {
-                this.value = $moment(this.value).add(1, 'day').toDate();
+                const d = this.$store.state.period.work.clone();
+                this.$store.commit("set", {period: {work: d.add(1, 'day')}});
+                if (this.all?.length < 1){
+                    this._fetch();
+                }
                 this.$nextTick(this._to_top);
             }
         }
@@ -529,23 +589,11 @@ export default {
 }
 </script>
 <style lang="scss">
-.v-toolbar.wp-calendar-bar {
-    & .v-btn{
-        &__content{
-            font-size: 0.85rem;
-            flex-direction: column;
-            line-height: 1.125;
-            color:var(--v-primary-base);
-            & .text-muted {
-                font-size: 0.55rem;
-            }
-        }
-    }
-}
-
 .v-calendar{
     height: 100%;
-    min-height: 1900px;
+    &.v-calendar-weekly{
+        min-height: 1900px !important;
+    }
 }
 
 .v-event, .v-event-timed {

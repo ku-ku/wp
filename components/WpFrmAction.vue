@@ -254,7 +254,7 @@ export default {
                 ...mapState({
                     statuses:  state => state.data.statuses,
                     employees: state => state.data.employees,
-                    places:    state => state.data.places
+                    places:    state => state.data.places.map( p => p.UF_PLACE )
                 })
     },
     methods: {

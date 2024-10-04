@@ -20,13 +20,13 @@
                 </template>
                 <v-date-picker v-model="date"
                                :readonly="readonly"
+                               color="primary"
                                picker-date
                                show-current
-                               no-title
                                locale="ru-ru"
                                scrollable
                                first-day-of-week="1"
-                               @input="menu = false">
+                               v-on:input="menu = false">
                 </v-date-picker>
             </v-menu>
         </template>
@@ -94,13 +94,13 @@ export default {
         date: {
             get(){
                 const m = moment(this.text, this.mask);
-                return ( !empty(this.text)&&m.isValid() ) ? m.toISOString() : null;
+                return ( !empty(this.text)&&m.isValid() ) ? m.format('YYYY-MM-DD') : null;
             },
             set(dt){
-                if (this.readonly){
+                if ( this.readonly ){
                     return;
                 }
-                if (!empty(dt)){
+                if ( !empty(dt) ){
                     this.text = moment(dt, "YYYY-MM-DD").format(this.mask);
                 }
                 this.menu = false;

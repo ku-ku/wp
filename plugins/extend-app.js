@@ -1,6 +1,10 @@
 import Vue from 'vue';
 import Vuetify from 'vuetify';
 import WpMsg from '~/components/WpMsg';
+import mom from "moment";
+mom.locale("ru");
+window["$moment"] = mom;
+
 
 import '@mdi/font/css/materialdesignicons.css';
 
@@ -12,6 +16,9 @@ if (
     window["$"] = require("jquery");
 }
 
+Vue.prototype.$eventHub = new Vue();
+
+
 export default async function( ctx ){
     const { app, env, store } = ctx;
     
@@ -19,11 +26,12 @@ export default async function( ctx ){
         app.mixins = [];
     }
     
+    
     /**
      * for snack-bar messages (see methods.msg -> $nuxt.msg)
+     * appMsg = null,
      */
-    var appMsg = null,
-        worker = null;
+    var worker = null;
     
     var conte = $(".page-content");
     if ( conte.length > 0 ){        //attache root to bx-conte
@@ -118,7 +126,6 @@ export default async function( ctx ){
             /**
              * Messaging: show/hide app-message on snackbar
              * @param {Object} msg text, color?, timeout?
-             */
             msg(msg){
                 if (!(!!appMsg)){
                     const el = $('<div id="app-msg"></div>').appendTo($(this.$el).find('.v-application'));
@@ -133,6 +140,7 @@ export default async function( ctx ){
                 }
                 return appMsg.show(msg);
             },
+             */
             cache(data){
                 if (1==1){
                     return;

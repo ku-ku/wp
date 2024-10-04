@@ -79,9 +79,12 @@ class CHLBTEntity extends CHLBT {
             return $res;
         }
         $id = intval($item['ID']);
-        $obResult = ( $id > 0 ) 
-                        ? $this->entity_data_class::update( $id, $item ) 
-                        : $this->entity_data_class::add( $item );
+        if ($id > 0){
+            $obResult = $this->entity_data_class::update( $id, $item );
+        } else {
+            unset($item['ID']);
+            $obResult = $this->entity_data_class::add( $item );
+        }
         $id = $obResult->getID();
         $res = array(
                         "success" => $obResult->isSuccess(), 

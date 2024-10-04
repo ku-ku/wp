@@ -1,8 +1,9 @@
 <template>
     <v-container>
         <v-row class="wp-auth fill-height" justify="center" align="center">
-            <v-col cols="11" md="6">
-                <v-form v-on:submit.stop.prevent="onauth" action="#" v-model="valid">
+            <v-col cols="11" md="4">
+                <v-form v-on:submit.stop.prevent="onauth" 
+                        action="#" v-model="valid">
                     <v-card class="elevation-3">
                         <v-card-title>
                             <div class="form-icon">
@@ -41,8 +42,8 @@
                         <v-card-actions>
                             <v-btn type="submit" 
                                    tile
-                                   :loading="pending"
                                    dark 
+                                   :loading="$fetchState.pending"
                                    :color="has('user') ? 'primary' : 'red darken-4'">
                                 <template v-if="has('user')">
                                     <v-icon>mdi-check-circle-outline</v-icon>&nbsp;ok
@@ -72,10 +73,10 @@ const USER_DEFS = {
 
 export default {
   name: 'SignInPage',
+  fetchOnServer: false,
   data() {
     return {
             valid: false,
-            pending: false,
             user: {id: null, u: null, p: null},
             error: '',
             rules: {
@@ -91,6 +92,21 @@ export default {
     computed: {
         title(){
             return 'План мероприятий | Авторизация';
+        }
+    },
+    async fetch(){
+        const {u, p} = this.user;
+        if ( empty(u) || empty(p) ) {
+            return false;
+        }
+        this.error = '';
+        const user = await $nuxt.api("auth", this.user);
+        if (user.id > 0){
+            this.$store.commit("data/set", { user });
+            this.user.id = user.id;
+        } else {
+            this.valid = false;
+            this.error = "Неверное имя пользователя или пароль";
         }
     },
     methods: {
@@ -111,24 +127,16 @@ export default {
                 $('input[name="u"]').trigger('focus');
                 return false;
             }
-            this.error = '';
-            this.pending = true;
             try {
-                const user = await $nuxt.api("auth", this.user);
-                this.$store.commit("data/set", { user });
-                if (user.id < 1){
-                    throw {message: 'Not Authorized'};
+                await this.$fetch();
+                if (this.user.id > 0){
+                    setTimeout( () => {
+                        this.$router.replace({name: 'calendar'});
+                    }, 500);
                 }
-                this.user.id = user.id;
-                
-                setTimeout( () => {
-                    this.$router.replace({name: 'index'});
-                }, 1000);
             } catch(e) {
                 console.log('ERR (login)', e);
                 this.error = 'Логин или пароль неверный';
-            } finally {
-                this.pending = false;
             }
             return false;
         }     //onauth

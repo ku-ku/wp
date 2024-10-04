@@ -51,6 +51,23 @@
             <v-list-item-icon><v-icon>mdi-account-tie</v-icon></v-list-item-icon>
             <v-list-item-title>Сотрудники</v-list-item-title>
           </v-list-item>
+          <v-list-item :to="{path: '/info/places', replace: true}">
+            <v-list-item-icon><v-icon>mdi-sofa</v-icon></v-list-item-icon>
+            <v-list-item-title>Места проведения мероприятий</v-list-item-title>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item v-on:click="pubplan()">
+            <v-list-item-icon><v-icon>mdi-calendar-check</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Опубликовать...</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item v-on:click="movereds()">
+            <v-list-item-icon><v-icon>mdi-calendar-arrow-right</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Перенести праздники...</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
           <v-divider></v-divider>
           <v-list-item v-on:click="doimp()">
             <v-list-item-icon><v-icon>mdi-table-arrow-up</v-icon></v-list-item-icon>
@@ -70,7 +87,10 @@
                ref="dlgAct" :mode="DIA_MODES.action" />
     <wp-dialog v-if="dialog"
                ref="dlgRed" :mode="DIA_MODES.reday" />
+    <wp-dialog ref="dlgMoveReds" 
+               :mode="DIA_MODES.movereds" />
     <wp-dates ref="dates" />
+    <wp-msg ref ="app-msg" />
   </v-app>
 </template>
 
@@ -81,6 +101,7 @@ import $moment from "moment";
 $moment.locale("ru");
 
 import WpBar from '~/components/WpBar.vue';
+import WpMsg from '~/components/WpMsg';
 import WpDialog from '~/components/WpDialog.vue';
 import WpAuthBtn from '~/components/WpAuthBtn.vue';
 import WpDates from '~/components/WpDates.vue';
@@ -92,6 +113,7 @@ export default {
   name: 'DefaultLayout',
   components: {
     WpBar,
+    WpMsg,
     WpDialog
   },
   data(){
@@ -99,7 +121,7 @@ export default {
       DIA_MODES,
       navi: null,
       dialog: false
-    }
+    };
   },
   computed:  {
     ...mapState({
@@ -108,6 +130,9 @@ export default {
             return state.period.start?.format("MMM, YYYY");
           }
     })
+  },
+  created(){
+      $nuxt.msg = this.msg;
   },
   methods: {
     has(q){
@@ -124,6 +149,14 @@ export default {
         this.$refs[q].open({ID:-1});
       });
     },
+    /**
+     * Messaging: show/hide app-message on snackbar
+     * @param {Object} msg text, color?, timeout?
+     */
+    msg(msg){
+        const appMsg = this.$refs["app-msg"];
+        return appMsg.show(msg);
+    },
     doimp(){
       this.$router.replace({path: '/calendar', query: {imp: (new Date()).getTime()}});
     },
@@ -137,7 +170,7 @@ export default {
             
             const days = gen_days(p.start, p.end);
             p.start = $moment(p.start);
-            p.end   = $moment(p.end).add(1, 'days').add(-1, 'seconds');
+            p.end   = $moment(p.end);        //.add(1, 'days').add(-1, 'seconds');
             
             
             const opts = {
@@ -205,6 +238,8 @@ export default {
                                             hdrs.push(name);
                                           }
                                       });
+                                      a.hdrs = hdrs.join(',\n');
+                                      
                                       const emps = [];
                                       a.EMPNAMES.forEach( name => {
                                           var name = shorting(name);
@@ -212,10 +247,23 @@ export default {
                                             emps.push(name);
                                           }
                                       });
+                                      a.emps = emps.join(',\n');
+                                      
+                                      a.sort = (a.UF_DAYATTR == 1) 
+                                                    ? Number.MAX_VALUE
+                                                    : (a.at.hours() * 100 + a.at.minutes()) * 10000000 + a.dsort;
+                                      
+                                      return a;
+                                  })
+                                  .sort( (d1, d2) => {
+                                        return (d1.sort < d2.sort)
+                                                    ? -1
+                                                    : (d1.sort > d2.sort) ? 1 : 0;
 
+                                  }).map( a => {
                                       return {
                                           id: a.ID,
-                                          tm: (1==a.UF_DAYATTR) ? ' ' : a.at.format("HH:mm"),
+                                          tm: (1==a.UF_DAYATTR) ? ' ' : a.at.format('HH:mm').replace('00:00', ' '),
                                           name: a.UF_TEXT,
                                           place: a.UF_PLACE,
                                           chief: hdrs.join(',\n'),
@@ -227,6 +275,7 @@ export default {
                 })
             };
 
+            console.log('report', data);
             $.ajax({
                     url: `${ $nuxt.context.env.apiUrl }/exp-doc.php`,
                     type: "POST",
@@ -252,7 +301,43 @@ export default {
             console.log('ERR (report)', e);
             $nuxt.msg({text:"Ошибка формирования отчета, попробуйте еще раз", color: "warning"});
         }
-    }   //doreport
+    },  //doreport
+    movereds(){
+        this.$refs["dlgMoveReds"].open();
+    },  //movereds
+    async pubplan(){
+        const p = await this.$refs["dates"].open();
+        if (!p){
+            return;
+        }
+        
+        p.start = $moment(p.start);
+        p.end   = $moment(p.end);
+        const opts = {
+                url: $nuxt.context.env.apiUrl,
+                data: {
+                    q: "publish",
+                    params: {
+                        start: p.start.toISOString(),
+                        end: p.end.toISOString()
+                    }
+                },
+                dataType: "json"
+        };
+        try {    
+            const res = await $.ajax(opts);
+            console.log("publish", res);
+            if ( res.success ){
+                $nuxt.msg({text: (res.rows > 0)
+                                    ? `Опубликовано ${ res.rows } записей`
+                                    : "За указанный период нет записей для опубликования",
+                           color: "default"});
+            }
+        } catch(e){
+            console.log('ERR (pub)', e);
+            $nuxt.msg({text:"Ошибка публикации записей, попробуйте еще раз", color: "warning"});
+        }
+    }   //pubplan
   }
 }
 </script>
